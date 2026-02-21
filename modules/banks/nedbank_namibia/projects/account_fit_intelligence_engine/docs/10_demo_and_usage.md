@@ -1,78 +1,290 @@
-# Demo and Usage Guide
+# Demo and Usage
 
-## Prerequisites
+## Purpose
 
-- Python 3.8 or higher
-- Required Python packages:
-  - pyyaml
-  - pandas
+This document provides usage examples and demonstrations of the Account Fit Intelligence Engine v0.1.
 
-## Installation
+## Scope
 
-Install the required dependencies:
+Practical usage guide for v0.1 (Silver PAYU simulator), including setup, execution, and output interpretation.
+
+## Setup
+
+### Prerequisites
+
+- Python 3.8+
+- Required packages: pandas, numpy, pyyaml, pytest
+- Jupyter (for notebooks)
+
+### Installation
 
 ```bash
-pip install pyyaml pandas
+cd modules/banks/nedbank_namibia/projects/account_fit_intelligence_engine
+
+# Install dependencies (when requirements.txt is created)
+pip install -r requirements.txt
 ```
 
-## Running the Account Fit Intelligence Engine
+## Usage Examples
 
-From the repository root, run:
+### Example 1: Generate Synthetic Data
+
+```python
+from code.src.ingest.generate_synthetic import generate_customers, generate_transactions
+
+# Generate 100 customers
+customers = generate_customers(n_customers=100, seed=42)
+customers.to_csv('data/synthetic/customers_sample.csv', index=False)
+
+# Generate 6 months of transactions
+transactions = generate_transactions(
+    customers=customers,
+    months=6,
+    seed=42
+)
+transactions.to_csv('data/synthetic/transactions_sample.csv', index=False)
+
+print(f"Generated {len(customers)} customers")
+print(f"Generated {len(transactions)} transactions")
+```
+
+### Example 2: Calculate Fees for Silver PAYU
+
+```python
+import yaml
+import pandas as pd
+from code.src.fees.payu_fee_model import calculate_monthly_fee
+
+# Load configuration
+with open('configs/account_types/silver_payu.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+# Load transactions for a customer
+transactions = pd.read_csv('data/synthetic/transactions_sample.csv')
+customer_txns = transactions[transactions['customer_id'] == 'CUST_001']
+
+# Calculate fees
+fees = calculate_monthly_fee(config, customer_txns)
+
+print(f"Monthly Fee: {fees['monthly_fee_fixed']} NAD")
+print(f"Transaction Fee Estimate: {fees['transaction_fee_estimate']} NAD")
+print(f"Total Estimate: {fees['total_monthly_estimate']} NAD")
+print(f"Notes: {fees['notes']}")
+```
+
+**Expected Output:**
+```
+Monthly Fee: 30.0 NAD
+Transaction Fee Estimate: 0.0 NAD
+Total Estimate: 30.0 NAD
+Notes: Transaction fees unknown; using placeholder value of 0. Actual costs may vary.
+```
+
+### Example 3: Extract Behaviour Features
+
+```python
+from code.src.features.build_features import build_features
+
+# Load data
+customers = pd.read_csv('data/synthetic/customers_sample.csv')
+transactions = pd.read_csv('data/synthetic/transactions_sample.csv')
+
+# Build features
+features = build_features(customers, transactions, time_period_months=6)
+
+# View features for one customer
+customer_features = features[features['customer_id'] == 'CUST_001']
+print(customer_features.to_dict('records')[0])
+```
+
+**Expected Output:**
+```python
+{
+    'customer_id': 'CUST_001',
+    'txn_count_monthly': 15.2,
+    'txn_amount_monthly_avg': 3250.50,
+    'pos_purchase_freq': 6.1,
+    'atm_withdrawal_freq': 2.3,
+    'airtime_purchase_freq': 2.3,
+    'electricity_purchase_freq': 1.5,
+    'eft_transfer_freq': 1.5,
+    'third_party_payment_freq': 0.8,
+    'income_freq': 0.8,
+    'avg_transaction_amount': 213.70,
+    'max_transaction_amount': 1200.00,
+    'transaction_diversity': 7
+}
+```
+
+### Example 4: Full Account Fit Analysis
+
+```python
+from code.src.engine.account_fit import analyze_account_fit
+
+# Analyze fit for a customer
+result = analyze_account_fit(
+    customer_id='CUST_001',
+    account_type='silver_payu',
+    config_path='configs/account_types/silver_payu.yaml',
+    data_path='data/synthetic/'
+)
+
+print(f"Customer: {result['customer_id']}")
+print(f"Account: {result['account_type']}")
+print(f"\nFee Analysis:")
+print(f"  Monthly Fee: {result['fees']['monthly_fee_fixed']} NAD")
+print(f"  Total Estimate: {result['fees']['total_monthly_estimate']} NAD")
+print(f"\nBehaviour Summary:")
+print(f"  Transactions/month: {result['features']['txn_count_monthly']}")
+print(f"  Transaction diversity: {result['features']['transaction_diversity']}")
+print(f"\nEligibility: {result['eligibility_status']}")
+```
+
+## Jupyter Notebook Demos
+
+### Notebook 1: Data Exploration
+
+**File:** `notebooks/00_exploration.ipynb`
+
+**Contents:**
+- Load and inspect synthetic data
+- Visualize customer distributions (age, income)
+- Analyze transaction patterns
+- Identify data quality issues
+
+**Key Visualizations:**
+- Customer age distribution
+- Income distribution
+- Transaction type frequency
+- Transaction amount distribution
+- Temporal patterns
+
+### Notebook 2: Fee Model Validation
+
+**File:** `notebooks/01_fee_model_validation.ipynb`
+
+**Contents:**
+- Test fee calculation logic
+- Compare fees across different usage patterns
+- Validate against known scenarios
+- Document limitations
+
+**Key Analyses:**
+- Fee calculation for low/medium/high usage customers
+- Sensitivity analysis (how fees change with behaviour)
+- Edge case testing (zero transactions, extreme values)
+
+## Command-Line Usage (Future)
 
 ```bash
-python modules/banks/nedbank_namibia/projects/account_fit_intelligence_engine/code/src/engine/account_fit.py
+# Generate synthetic data
+python -m code.src.ingest.generate_synthetic --customers 100 --months 6
+
+# Analyze account fit
+python -m code.src.engine.account_fit \
+    --customer CUST_001 \
+    --account silver_payu \
+    --config configs/account_types/silver_payu.yaml
+
+# Run tests
+pytest tests/
 ```
 
-The script can be executed from any directory - it will automatically locate the project root.
+## Output Interpretation
 
-## Expected Output
+### Fee Breakdown
 
-The engine produces a multi-customer intelligence report with the following information for each customer:
+**monthly_fee_fixed:** The known monthly account fee (30 NAD for Silver PAYU)
 
-### Report Fields
+**transaction_fee_estimate:** Estimated transaction fees (currently 0 due to unknown fee structure)
 
-- **Customer ID**: Unique customer identifier
-- **Txns**: Total number of transactions
-- **Digital%**: Percentage of digital (non-ATM) transactions
-- **Behaviour**: Behavioural classification tag
-  - `digital_first`: High digital usage (≥70%)
-  - `cash_heavy`: High ATM usage (≥40%)
-  - `utilities_focused`: Frequent utility payments (≥3)
-  - `mixed_usage`: Balanced usage pattern
-  - `no_activity`: No transactions
-- **Inflow**: Total income/deposits (NAD)
-- **Outflow**: Total expenses/withdrawals (NAD)
-- **Est.Fee**: Estimated monthly account fee (NAD)
+**total_monthly_estimate:** Sum of fixed and variable fees
 
-### Sample Output
+**notes:** Important limitations and assumptions
 
+### Behaviour Features
+
+**High transaction frequency (>20/month):**
+- Active user, high engagement
+- May benefit from accounts with transaction bundles
+
+**Low transaction frequency (<5/month):**
+- Light user
+- Fixed monthly fee may be disproportionate
+- May benefit from lower-tier account
+
+**High transaction diversity (>5 types):**
+- Uses many banking services
+- Needs full-featured account
+- Good fit for Silver PAYU
+
+**Low transaction diversity (<3 types):**
+- Limited service usage
+- May be over-paying for unused features
+- Consider simpler account
+
+### Eligibility Status
+
+**Eligible:** Customer meets all criteria (age, residency, income)
+
+**Not Eligible:** Customer fails one or more criteria
+- Details provided in output
+- Recommendation: Consider alternative accounts
+
+## Testing
+
+### Run All Tests
+
+```bash
+pytest tests/ -v
 ```
-================================================================================
-Silver PAYU Multi-Customer Intelligence Report
-================================================================================
 
-Account Type: silver_payu
-Total Customers: 3
+### Run Smoke Test
 
---------------------------------------------------------------------------------
-Customer ID  Txns   Digital%   Behaviour          Inflow       Outflow      Est.Fee   
---------------------------------------------------------------------------------
-CUST_001     5      60.0       mixed_usage        N$12000.00   N$980.50      N$30.00    
-CUST_002     5      60.0       mixed_usage        N$8500.00    N$970.75      N$30.00    
-CUST_003     5      60.0       mixed_usage        N$25000.00   N$1955.00     N$30.00    
-================================================================================
+```bash
+pytest tests/test_smoke.py -v
 ```
 
-## Data Requirements
+**Expected Output:**
+```
+tests/test_smoke.py::test_config_loads PASSED
+tests/test_smoke.py::test_data_generation PASSED
+tests/test_smoke.py::test_fee_calculation PASSED
+tests/test_smoke.py::test_feature_engineering PASSED
+tests/test_smoke.py::test_account_fit_analysis PASSED
+```
 
-The engine expects the following data files in the project:
+## Troubleshooting
 
-- `configs/account_types/silver_payu.yaml` - Account configuration
-- `data/synthetic/customers_sample.csv` - Customer profiles
-- `data/synthetic/transactions_sample.csv` - Transaction history
+### Issue: Config file not found
 
-## Notes
+**Error:** `FileNotFoundError: configs/account_types/silver_payu.yaml`
 
-- Transaction fees are not yet captured in the current version
-- Fee estimates only include the fixed monthly fee (N$30)
-- Variable PAYU pricing is pending and will be added in future versions
+**Solution:** Ensure you're running from the project root directory
+
+### Issue: Missing dependencies
+
+**Error:** `ModuleNotFoundError: No module named 'pandas'`
+
+**Solution:** Install required packages: `pip install pandas numpy pyyaml pytest`
+
+### Issue: Invalid data format
+
+**Error:** `ValueError: Invalid customer data schema`
+
+**Solution:** Regenerate synthetic data or check CSV format matches schema
+
+## Next Steps
+
+After running demos:
+
+1. Review generated data in `data/synthetic/`
+2. Explore notebooks for detailed analysis
+3. Modify configs to test different scenarios
+4. Review documentation for extending to new accounts (v0.2)
+
+## Related Documentation
+
+- See `05_data_model.md` for data schemas
+- See `06_feature_engineering.md` for feature details
+- See `11_assumptions_and_limits.md` for limitations

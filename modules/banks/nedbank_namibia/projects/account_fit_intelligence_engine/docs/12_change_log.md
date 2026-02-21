@@ -1,78 +1,311 @@
 # Change Log
 
+## Purpose
+
+This document tracks all significant changes, updates, and version history for the Account Fit Intelligence Engine.
+
 ## Version History
 
-### v0.1.2 (2026-02-21)
+### v0.1.0 - Initial Scaffold (2024-01-20)
 
-**Path Resolution & Multi-Customer Reporting**
+**Status:** Initial development
 
-- **Fixed**: Reliable project root path resolution
-  - Added `utils/paths.py` module with `find_project_root()` function
-  - Replaced brittle `Path.parents[3]` logic with robust upward directory search
-  - Script now works regardless of execution location (repo root or subdirectory)
-  
-- **Added**: Multi-customer intelligence reporting
-  - Engine now processes all customers in transaction dataset
-  - Generates summary table with key metrics per customer
-  - Displays: customer_id, txn_count, digital_ratio, behaviour_tag, inflows, outflows, estimated fees
-  - Clean, aligned tabular output format
-  
-- **Documentation**: Created usage guide and changelog
-  - Added `10_demo_and_usage.md` with prerequisites, installation, and expected output
-  - Added `12_change_log.md` to track version history
+**Added:**
+- Project structure and documentation
+- Silver PAYU account configuration
+- Synthetic data schemas (customers, transactions)
+- Code stubs for core modules:
+  - `schema.py` - Data schemas
+  - `generate_synthetic.py` - Data generation
+  - `load_data.py` - Data loading
+  - `payu_fee_model.py` - Fee calculation
+  - `build_features.py` - Feature engineering
+  - `account_fit.py` - Account fit analysis
+- Test framework (`test_smoke.py`)
+- Jupyter notebooks for exploration and validation
+- Comprehensive documentation (12 docs)
 
-### v0.1.1 (2024-01-22)
+**Scope:**
+- Single account type: Silver PAYU
+- Synthetic data only
+- Basic fee calculation (monthly fee + placeholder transaction fees)
+- Behaviour feature extraction
+- No multi-account comparison
+- No recommendation engine
 
-**Behavioural Features & Tagging**
+**Known Limitations:**
+- Transaction fees unknown (using placeholder 0 NAD)
+- Synthetic data not validated against real patterns
+- No production deployment
+- No API layer
+- No user interface
 
-- **Added**: Behavioural feature extraction module (`features/build_features.py`)
-  - Transaction count and volume metrics
-  - Digital vs. cash usage ratios
-  - Transaction type breakdowns (ATM, utilities, third-party payments)
-  - Rule-based behaviour tagging system
-  
-- **Enhanced**: Account fit report now includes behavioural profile
-  - Digital ratio calculation
-  - Behaviour tags: `digital_first`, `cash_heavy`, `utilities_focused`, `mixed_usage`, `no_activity`
-  - Explainable, deterministic classification logic
+**Next Steps:**
+- Implement code stubs
+- Generate initial synthetic data
+- Validate fee calculation logic
+- Test feature engineering pipeline
 
-### v0.1.0 (2024-01-20)
+---
 
-**Initial Fee Engine**
+## Future Versions (Planned)
 
-- **Created**: Core fee calculation engine for Silver PAYU account
-  - Configuration loading from YAML (`config.py`)
-  - Transaction data ingestion (`ingest/load_data.py`)
-  - Fee calculation model (`fees/payu_fee_model.py`)
-  - Main orchestration script (`engine/account_fit.py`)
-  
-- **Features**:
-  - Fixed monthly fee calculation (N$30)
-  - Placeholder for variable transaction fees (pending public data)
-  - Single customer analysis
-  - Basic intelligence report output
+### v0.2.0 - Multi-Account Support (Planned)
 
-### v0.1 (2024-01-15)
+**Planned Additions:**
+- Savvy account configuration
+- Gold PAYU account configuration
+- Additional account types (2-3 total)
+- Parallel fee calculations
+- Basic comparison logic
 
-**Project Scaffold**
+**Scope:**
+- Multiple account types
+- Still synthetic data only
+- Comparative fee analysis
+- No recommendation logic yet
 
-- **Created**: Initial project structure
-  - Directory layout: `code/`, `configs/`, `data/`, `docs/`, `notebooks/`, `tests/`
-  - Documentation framework
-  - Data schema definitions
-  - Configuration templates
+### v0.3.0 - Recommendation Engine (Planned)
 
-## Roadmap
+**Planned Additions:**
+- Account fit scoring algorithm
+- Ranking and recommendation logic
+- Confidence scores
+- Comparison reports
+- Enhanced feature engineering
 
-### Planned Features
+**Scope:**
+- Full comparison across accounts
+- Recommendation generation
+- Still synthetic data
+- Internal tool (not customer-facing)
 
-- **v0.2.0**: Transaction fee structure integration (when data becomes available)
-- **v0.3.0**: Account fit scoring and recommendation engine
-- **v0.4.0**: Multi-account type comparison
-- **v0.5.0**: Time-series analysis and trend detection
+### v1.0.0 - Production Deployment (Planned)
 
-## Notes
+**Planned Additions:**
+- API layer (REST endpoints)
+- Real data integration (with privacy controls)
+- ML-based recommendations
+- User interface (web)
+- Production infrastructure
+- Compliance framework (POPIA, etc.)
+- Monitoring and logging
+- A/B testing framework
 
-- Transaction fees remain unknown and are not included in cost estimates
-- All fee calculations are based on publicly available information
-- Synthetic data is used for development and testing
+**Scope:**
+- Customer-facing deployment
+- Real-time recommendations
+- Full compliance
+- Scalable infrastructure
+
+---
+
+## Change Categories
+
+Changes are categorized as:
+- **Added:** New features or capabilities
+- **Changed:** Modifications to existing features
+- **Deprecated:** Features marked for removal
+- **Removed:** Deleted features
+- **Fixed:** Bug fixes
+- **Security:** Security-related changes
+
+---
+
+## Update Guidelines
+
+**When to Update This Log:**
+- New version released
+- Significant feature added
+- Breaking changes made
+- Important bugs fixed
+- Configuration changes
+- Documentation updates
+
+**Format:**
+```
+### vX.Y.Z - Version Name (YYYY-MM-DD)
+
+**Added:**
+- Feature 1
+- Feature 2
+
+**Changed:**
+- Modification 1
+
+**Fixed:**
+- Bug fix 1
+
+**Known Issues:**
+- Issue 1
+```
+
+---
+
+## Configuration Changes
+
+### Account Configurations
+
+**v0.1.0:**
+- Added `silver_payu.yaml` with observed data from Nedbank Namibia
+
+**Future:**
+- Track changes to account configurations
+- Document when fees or features are updated
+- Note source of information (public docs, bank communication, etc.)
+
+---
+
+## Data Schema Changes
+
+### v0.1.0 - Initial Schemas
+
+**Customer Schema:**
+- customer_id, age, residency, income_gross_monthly
+- customer_segment, account_category, account_type_id
+
+**Transaction Schema:**
+- transaction_id, customer_id, ts, amount, type, merchant
+
+**Future:**
+- Track schema changes
+- Document migration paths
+- Maintain backward compatibility where possible
+
+---
+
+## Dependency Changes
+
+### v0.1.0 - Initial Dependencies
+
+**Core:**
+- Python 3.8+
+- pandas
+- numpy
+- pyyaml
+
+**Testing:**
+- pytest
+
+**Notebooks:**
+- jupyter
+
+**Future:**
+- Track dependency updates
+- Document breaking changes
+- Security updates
+
+---
+
+## Documentation Changes
+
+### v0.1.0 - Initial Documentation
+
+**Created:**
+- 00_overview.md
+- 01_problem_context.md
+- 02_current_bank_flow.md
+- 03_proposed_solution.md
+- 04_system_architecture.md
+- 05_data_model.md
+- 06_feature_engineering.md
+- 07_api_design.md
+- 08_risk_and_compliance.md
+- 09_business_impact.md
+- 10_demo_and_usage.md
+- 11_assumptions_and_limits.md
+- 12_change_log.md (this file)
+
+**Future:**
+- Track significant documentation updates
+- Note when assumptions change
+- Document new limitations discovered
+
+---
+
+## Known Issues
+
+### v0.1.0
+
+**Issue 1: Transaction Fees Unknown**
+- **Description:** Actual transaction fee structure not publicly available
+- **Impact:** Cost estimates incomplete
+- **Workaround:** Using placeholder value of 0 NAD with clear documentation
+- **Resolution:** Update when fee information available
+
+**Issue 2: Synthetic Data Not Validated**
+- **Description:** Generated data patterns not validated against real customer behaviour
+- **Impact:** Unknown accuracy of simulations
+- **Workaround:** Use diverse patterns, document assumption
+- **Resolution:** Validate when real data available (v1.0)
+
+**Issue 3: No Multi-Account Comparison**
+- **Description:** Only Silver PAYU implemented
+- **Impact:** Cannot recommend alternative accounts
+- **Workaround:** Document as v0.1 limitation
+- **Resolution:** Planned for v0.2
+
+---
+
+## Breaking Changes
+
+### v0.1.0
+- None (initial version)
+
+**Future:**
+- Document any breaking changes to APIs, schemas, or configurations
+- Provide migration guides
+- Maintain backward compatibility where possible
+
+---
+
+## Deprecation Notices
+
+### v0.1.0
+- None (initial version)
+
+**Future:**
+- Announce features planned for removal
+- Provide timeline for deprecation
+- Suggest alternatives
+
+---
+
+## Security Updates
+
+### v0.1.0
+- None (synthetic data only, no security concerns)
+
+**Future:**
+- Document security patches
+- Track vulnerability fixes
+- Note compliance updates
+
+---
+
+## Performance Improvements
+
+### v0.1.0
+- None (initial version)
+
+**Future:**
+- Track optimization efforts
+- Document performance benchmarks
+- Note scalability improvements
+
+---
+
+## Acknowledgments
+
+**v0.1.0:**
+- Data sources: Nedbank Namibia public website
+- Methodology: Standard banking analytics practices
+- Tools: Python data science ecosystem
+
+---
+
+## Related Documentation
+
+- See `11_assumptions_and_limits.md` for current limitations
+- See `03_proposed_solution.md` for version roadmap
+- See `README.md` for project overview

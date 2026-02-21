@@ -56,3 +56,70 @@ def calculate_monthly_fee(account_config: Dict[str, Any], transactions) -> Dict[
         'total_estimated_fee': total_fee,
         'notes': notes
     }
+
+
+def calculate_transaction_fees(transactions: pd.DataFrame, fee_structure: Dict[str, float]) -> float:
+    """
+    Calculate total transaction fees based on fee structure.
+    
+    Args:
+        transactions: DataFrame of customer transactions
+        fee_structure: Dictionary mapping transaction types to fees
+        
+    Returns:
+        Total transaction fees (NAD)
+        
+    Example:
+        >>> fee_structure = {
+        ...     'pos_purchase': 2.50,
+        ...     'atm_withdrawal': 5.00,
+        ...     'airtime_purchase': 1.00
+        ... }
+        >>> total_fees = calculate_transaction_fees(transactions, fee_structure)
+    """
+    # TODO: Implement transaction fee calculation
+    # - Group transactions by type
+    # - Apply fees from fee_structure
+    # - Handle unknown transaction types (use 0 or warn)
+    # - Sum total fees
+    
+    total_fees = 0.0
+    
+    return total_fees
+
+
+def estimate_monthly_cost(
+    account_config: Dict[str, Any],
+    transactions: pd.DataFrame,
+    time_period_months: int
+) -> Dict[str, Any]:
+    """
+    Estimate average monthly cost based on historical transaction patterns.
+    
+    Args:
+        account_config: Account configuration dictionary
+        transactions: DataFrame of customer transactions
+        time_period_months: Number of months in transaction history
+        
+    Returns:
+        Dictionary with cost breakdown and estimates
+        
+    Example:
+        >>> cost_estimate = estimate_monthly_cost(config, transactions, time_period_months=6)
+        >>> print(f"Average monthly cost: {cost_estimate['average_monthly_cost']} NAD")
+    """
+    # TODO: Implement monthly cost estimation
+    # - Calculate fees for entire period
+    # - Normalize to monthly average
+    # - Provide breakdown by fee type
+    # - Include confidence intervals if possible
+    
+    fees = calculate_monthly_fee(account_config, transactions)
+    
+    return {
+        'average_monthly_cost': fees['total_monthly_estimate'],
+        'fixed_component': fees['monthly_fee_fixed'],
+        'variable_component': fees['transaction_fee_estimate'],
+        'time_period_months': time_period_months,
+        'notes': fees['notes']
+    }

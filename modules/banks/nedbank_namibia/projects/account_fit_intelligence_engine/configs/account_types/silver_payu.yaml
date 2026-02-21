@@ -10,6 +10,9 @@ customer_segment: personal
 account_family: accounts
 account_category: everyday
 
+# Account Classification
+account_class: "current"  # Used for POS fee determination (current vs savings)
+
 # Monthly Fee (OBSERVED)
 monthly_fee: 30  # NAD
 

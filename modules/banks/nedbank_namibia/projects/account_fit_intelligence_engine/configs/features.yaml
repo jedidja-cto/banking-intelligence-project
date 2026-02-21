@@ -1,0 +1,175 @@
+# Feature Definitions
+# Behaviour features extracted from customer transaction data
+
+# Feature Categories
+categories:
+  - frequency
+  - amount
+  - diversity
+  - temporal
+
+# Frequency Features
+frequency_features:
+  - name: txn_count_monthly
+    description: Average number of transactions per month
+    calculation: COUNT(transactions) / months
+    type: float
+    min_value: 0
+    max_value: 100
+    
+  - name: pos_purchase_freq
+    description: POS purchase frequency per month
+    calculation: COUNT(type=pos_purchase) / months
+    type: float
+    min_value: 0
+    max_value: 50
+    
+  - name: atm_withdrawal_freq
+    description: ATM withdrawal frequency per month
+    calculation: COUNT(type=atm_withdrawal) / months
+    type: float
+    min_value: 0
+    max_value: 20
+    
+  - name: airtime_purchase_freq
+    description: Airtime purchase frequency per month
+    calculation: COUNT(type=airtime_purchase) / months
+    type: float
+    min_value: 0
+    max_value: 20
+    
+  - name: electricity_purchase_freq
+    description: Electricity payment frequency per month
+    calculation: COUNT(type=electricity_purchase) / months
+    type: float
+    min_value: 0
+    max_value: 10
+    
+  - name: eft_transfer_freq
+    description: EFT transfer frequency per month
+    calculation: COUNT(type=eft_transfer) / months
+    type: float
+    min_value: 0
+    max_value: 20
+    
+  - name: third_party_payment_freq
+    description: Third-party payment frequency per month
+    calculation: COUNT(type=third_party_payment) / months
+    type: float
+    min_value: 0
+    max_value: 10
+    
+  - name: income_freq
+    description: Income deposit frequency per month
+    calculation: COUNT(type=income) / months
+    type: float
+    min_value: 0
+    max_value: 5
+
+# Amount Features
+amount_features:
+  - name: txn_amount_monthly_avg
+    description: Average monthly transaction volume (NAD)
+    calculation: SUM(amount) / months
+    type: float
+    min_value: 0
+    max_value: 1000000
+    
+  - name: avg_transaction_amount
+    description: Average transaction size (NAD)
+    calculation: AVG(amount WHERE amount > 0)
+    type: float
+    min_value: 0
+    max_value: 100000
+    
+  - name: max_transaction_amount
+    description: Largest transaction (NAD)
+    calculation: MAX(amount)
+    type: float
+    min_value: 0
+    max_value: 1000000
+    
+  - name: min_transaction_amount
+    description: Smallest transaction (NAD)
+    calculation: MIN(amount WHERE amount > 0)
+    type: float
+    min_value: 0
+    max_value: 10000
+    
+  - name: amount_std_dev
+    description: Transaction amount standard deviation (NAD)
+    calculation: STDDEV(amount WHERE amount > 0)
+    type: float
+    min_value: 0
+    max_value: 100000
+
+# Diversity Features
+diversity_features:
+  - name: transaction_diversity
+    description: Number of different transaction types used
+    calculation: COUNT(DISTINCT type)
+    type: integer
+    min_value: 0
+    max_value: 10
+    
+  - name: merchant_diversity
+    description: Number of different merchants used
+    calculation: COUNT(DISTINCT merchant WHERE merchant IS NOT NULL)
+    type: integer
+    min_value: 0
+    max_value: 100
+
+# Temporal Features (Future - v0.2+)
+temporal_features:
+  - name: weekend_txn_ratio
+    description: Proportion of transactions on weekends
+    calculation: COUNT(weekend) / COUNT(all)
+    type: float
+    min_value: 0
+    max_value: 1
+    enabled: false  # Not implemented in v0.1
+    
+  - name: business_hours_ratio
+    description: Proportion of transactions during business hours (9am-5pm)
+    calculation: COUNT(9am-5pm) / COUNT(all)
+    type: float
+    min_value: 0
+    max_value: 1
+    enabled: false  # Not implemented in v0.1
+    
+  - name: month_end_spike
+    description: Ratio of last week activity to other weeks
+    calculation: AVG(last_week) / AVG(other_weeks)
+    type: float
+    min_value: 0
+    max_value: 10
+    enabled: false  # Not implemented in v0.1
+
+# Feature Importance (for future ML models)
+feature_importance:
+  high:
+    - txn_count_monthly
+    - transaction_diversity
+    - txn_amount_monthly_avg
+  medium:
+    - pos_purchase_freq
+    - atm_withdrawal_freq
+    - avg_transaction_amount
+  low:
+    - merchant_diversity
+    - weekend_txn_ratio
+    - business_hours_ratio
+
+# Validation Rules
+validation:
+  check_ranges: true
+  check_types: true
+  check_nan: true
+  check_inf: true
+  warn_on_outliers: true
+
+# Metadata
+metadata:
+  version: 0.1.0
+  last_updated: 2024-01-20
+  description: Feature definitions for Account Fit Intelligence Engine v0.1

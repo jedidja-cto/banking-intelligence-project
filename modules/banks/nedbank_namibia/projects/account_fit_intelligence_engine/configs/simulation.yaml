@@ -1,0 +1,145 @@
+# Simulation Configuration
+# Parameters for synthetic data generation and account fit analysis
+
+# Data Generation Parameters
+data_generation:
+  # Customer generation
+  customers:
+    count: 100  # Number of synthetic customers to generate
+    seed: 42  # Random seed for reproducibility
+    
+    # Age distribution
+    age:
+      distribution: normal
+      mean: 35
+      std: 12
+      min: 18
+      max: 65
+    
+    # Income distribution (NAD gross monthly)
+    income:
+      distribution: lognormal
+      mean: 15000  # Target mean after transformation
+      std: 10000
+      min: 3000  # Silver PAYU minimum
+      max: 50000  # Silver PAYU maximum
+    
+    # Residency
+    residency:
+      namibian_resident: 1.0  # 100% for v0.1
+      non_resident: 0.0
+  
+  # Transaction generation
+  transactions:
+    time_period_months: 6  # Historical period to generate
+    seed: 42  # Random seed for reproducibility
+    
+    # Transaction frequency (per customer per month)
+    frequency:
+      distribution: poisson
+      lambda: 15  # Average transactions per month
+    
+    # Transaction amounts (NAD)
+    amounts:
+      distribution: lognormal
+      mean: 200  # Target mean
+      std: 150
+      min: 10
+      max: 5000
+    
+    # Transaction type distribution
+    type_distribution:
+      pos_purchase: 0.40
+      atm_withdrawal: 0.15
+      airtime_purchase: 0.15
+      electricity_purchase: 0.10
+      eft_transfer: 0.10
+      third_party_payment: 0.05
+      income: 0.05
+    
+    # Merchant generation (for applicable transaction types)
+    merchants:
+      pos_purchase:
+        - Shoprite
+        - Pick n Pay
+        - Checkers
+        - Spar
+        - Woolworths
+      airtime_purchase:
+        - MTC
+        - TN Mobile
+      electricity_purchase:
+        - City of Windhoek
+        - NamPower
+
+# Feature Engineering Parameters
+feature_engineering:
+  # Minimum transaction history required (months)
+  min_history_months: 3
+  
+  # Outlier detection thresholds
+  outliers:
+    max_transaction_amount: 100000  # NAD
+    max_monthly_transactions: 100
+  
+  # Feature validation
+  validation:
+    check_nan: true
+    check_inf: true
+    check_negative_frequencies: true
+
+# Account Fit Analysis Parameters
+account_fit:
+  # Eligibility checking
+  eligibility:
+    strict_mode: true  # Fail if any criterion not met
+  
+  # Fee calculation
+  fees:
+    use_placeholder_for_unknown: true
+    placeholder_value: 0
+    warn_on_placeholder: true
+  
+  # Output format
+  output:
+    include_features: true
+    include_eligibility: true
+    include_fees: true
+    include_notes: true
+
+# Logging and Debugging
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  log_to_file: false
+  log_file_path: logs/simulation.log
+
+# Validation Rules
+validation:
+  # Data quality checks
+  data_quality:
+    check_duplicates: true
+    check_missing_values: true
+    check_schema: true
+    check_referential_integrity: true
+  
+  # Business rule validation
+  business_rules:
+    check_eligibility: true
+    check_transaction_types: true
+    check_amount_ranges: true
+
+# Performance Settings
+performance:
+  # Parallel processing (future)
+  use_parallel: false
+  n_workers: 1
+  
+  # Caching
+  cache_features: false
+  cache_path: cache/
+
+# Metadata
+metadata:
+  version: 0.1.0
+  last_updated: 2024-01-20
+  description: Simulation configuration for Account Fit Intelligence Engine v0.1

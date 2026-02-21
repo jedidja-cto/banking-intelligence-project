@@ -1,0 +1,53 @@
+# Nedbank Namibia Fee Schedule 2026/27
+# Effective: 2 March 2026 to 1 March 2027
+# All fees include VAT
+
+metadata:
+  effective_from: "2026-03-02"
+  effective_to: "2027-03-01"
+  vat_included: true
+  currency: NAD
+  notes:
+    - "Nedbank Namibia charges. Beneficiary bank may impose additional charges."
+
+# Fee rules by channel and transaction type
+# All amounts in Namibian Dollars (N$)
+
+online:
+  third_party_payment:
+    rule_type: flat
+    value: 15.50
+  
+  electricity_purchase:
+    rule_type: flat
+    value: 1.00
+  
+  airtime_purchase:
+    rule_type: flat
+    value: 2.30
+  
+  eft_transfer:
+    rule_type: flat
+    value: 15.50
+
+atm:
+  nedbank_atm_withdrawal:
+    rule_type: per_step
+    step_amount: 300
+    step_fee: 10.00
+  
+  other_bank_atm_withdrawal:
+    rule_type: base_plus_step_cap
+    base_fee: 7.20
+    step_amount: 500
+    step_fee: 13.70
+    cap: 35.00
+
+pos:
+  local:
+    savings:
+      rule_type: flat
+      value: 5.00
+    current:
+      rule_type: flat
+      value: 6.00

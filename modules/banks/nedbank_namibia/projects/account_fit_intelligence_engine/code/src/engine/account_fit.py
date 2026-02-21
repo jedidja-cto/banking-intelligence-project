@@ -36,40 +36,46 @@ def main():
     # Load transaction data
     transactions = load_transactions(str(tx_path))
     
-    # Filter to first customer for v0.1.1 (single customer analysis)
-    customer_id = transactions["customer_id"].iloc[0]
-    tx_customer = transactions[transactions["customer_id"] == customer_id]
+    # Get unique customers
+    unique_customers = transactions["customer_id"].unique()
     
-    # Calculate fees
-    result = calculate_monthly_fee(account_config, tx_customer)
+    # Collect results for all customers
+    results = []
+    for customer_id in unique_customers:
+        tx_customer = transactions[transactions["customer_id"] == customer_id]
+        
+        # Calculate fees
+        fee_result = calculate_monthly_fee(account_config, tx_customer)
+        
+        # Extract behavioural features
+        features = extract_behavioural_features(tx_customer)
+        
+        # Combine results
+        results.append({
+            'customer_id': customer_id,
+            'txn_count': features['txn_count'],
+            'digital_ratio': features['digital_ratio'],
+            'behaviour_tag': features['behaviour_tag'],
+            'total_inflow': features['total_inflow'],
+            'total_outflow': features['total_outflow'],
+            'total_estimated_fee': fee_result['total_estimated_fee']
+        })
     
-    # Extract behavioural features
-    features = extract_behavioural_features(tx_customer)
+    # Output multi-customer summary table
+    print("\n" + "="*80)
+    print("Silver PAYU Multi-Customer Intelligence Report")
+    print("="*80)
+    print(f"\nAccount Type: {account_config['account_type_id']}")
+    print(f"Total Customers: {len(unique_customers)}")
     
-    # Output results
-    print("\n" + "="*60)
-    print("Silver PAYU Account Intelligence Report")
-    print("="*60)
-    print(f"\nCustomer ID: {customer_id}")
-    print(f"Account Type: {account_config['account_type_id']}")
+    print("\n" + "-"*80)
+    print(f"{'Customer ID':<12} {'Txns':<6} {'Digital%':<10} {'Behaviour':<18} {'Inflow':<12} {'Outflow':<12} {'Est.Fee':<10}")
+    print("-"*80)
     
-    print("\n--- Fee Estimate ---")
-    print(f"Fixed Monthly Fee:       N${result['fixed_monthly_fee']:.2f}")
-    print(f"Variable Fee Estimate:   N${result['variable_fee_estimate']:.2f}")
-    print(f"Total Estimated Fee:     N${result['total_estimated_fee']:.2f}")
-    print(f"\nNotes: {result['notes']}")
+    for r in results:
+        print(f"{r['customer_id']:<12} {r['txn_count']:<6} {r['digital_ratio']*100:<10.1f} {r['behaviour_tag']:<18} N${r['total_inflow']:<11.2f} N${r['total_outflow']:<11.2f} N${r['total_estimated_fee']:<9.2f}")
     
-    print("\n--- Behavioural Profile ---")
-    print(f"Transaction Count:       {features['txn_count']}")
-    print(f"Total Inflow:            N${features['total_inflow']:.2f}")
-    print(f"Total Outflow:           N${features['total_outflow']:.2f}")
-    print(f"ATM Withdrawals:         {features['atm_withdrawal_count']}")
-    print(f"Utility Payments:        {features['utility_count']}")
-    print(f"Third-Party Payments:    {features['third_party_payment_count']}")
-    print(f"Digital Ratio:           {features['digital_ratio']:.1%}")
-    print(f"Behaviour Tag:           {features['behaviour_tag']}")
-    
-    print("="*60 + "\n")
+    print("="*80 + "\n")
 
 
 if __name__ == '__main__':

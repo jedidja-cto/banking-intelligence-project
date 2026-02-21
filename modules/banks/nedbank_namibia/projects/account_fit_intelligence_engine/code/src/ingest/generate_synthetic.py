@@ -80,8 +80,13 @@ def generate_customers_and_transactions(n_customers: int = 20, seed: int = SEED)
             'account_type_id': 'silver_payu'
         })
         
-        # Assign archetype
-        archetype = rng.choice(archetypes)
+        # Assign archetype with balanced weights
+        # digital_first: 35%, cash_heavy: 25%, utilities_focused: 20%, mixed_usage: 20%
+        archetype = rng.choices(
+            ['digital_first', 'cash_heavy', 'utilities_focused', 'mixed_usage'],
+            weights=[35, 25, 20, 20],
+            k=1
+        )[0]
         
         # Generate transactions based on archetype
         if archetype == 'digital_first':

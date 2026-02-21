@@ -61,24 +61,24 @@ def main():
             'total_estimated_fee': fee_result['total_estimated_fee']
         })
     
-    # Output multi-customer summary table
-    print("\n" + "="*90)
+    # Output multi-customer summary table with stable column widths
+    # Designed for narrow terminals (59 chars)
+    print("\n" + "="*58)
     print("Silver PAYU Multi-Customer Intelligence Report")
-    print("="*90)
+    print("="*58)
     print(f"\nAccount Type: {account_config['account_type_id']}")
     print(f"Total Customers: {len(unique_customers)}")
-    
-    print("\n" + "-"*90)
-    print(f"{'Customer ID':<13} {'Txns':<6} {'Digital%':<11} {'Behaviour':<18} {'Inflow':<15} {'Outflow':<15} {'Est.Fee':<12}")
-    print("-"*90)
+    print("")
     
     for r in results:
-        inflow_str = f"N${r['total_inflow']:,.2f}"
-        outflow_str = f"N${r['total_outflow']:,.2f}"
-        fee_str = f"N${r['total_estimated_fee']:,.2f}"
-        print(f"{r['customer_id']:<13} {r['txn_count']:<6} {r['digital_ratio']*100:<11.1f} {r['behaviour_tag']:<18} {inflow_str:<15} {outflow_str:<15} {fee_str:<12}")
+        # Two-line format per customer for narrow terminals
+        line1 = f"{r['customer_id']:<11} {r['txn_count']:>3}tx {r['digital_ratio']*100:>5.1f}% {r['behaviour_tag']:<17}"
+        line2 = f"  In: N${r['total_inflow']:>10,.2f}  Out: N${r['total_outflow']:>10,.2f}  Fee: N${r['total_estimated_fee']:>5,.2f}"
+        print(line1)
+        print(line2)
+        print("")
     
-    print("="*90)
+    print("="*58)
     
     # Footer summary
     print("\nBehaviour Distribution:")
@@ -88,11 +88,11 @@ def main():
         behaviour_counts[tag] = behaviour_counts.get(tag, 0) + 1
     
     for tag, count in sorted(behaviour_counts.items()):
-        print(f"  {tag:<18} {count:>3} customers")
+        print(f"  {tag:<17} {count:>3} customers")
     
     avg_digital_ratio = sum(r['digital_ratio'] for r in results) / len(results)
     print(f"\nAverage Digital Ratio: {avg_digital_ratio:.1%}")
-    print("="*90 + "\n")
+    print("="*58 + "\n")
 
 
 if __name__ == '__main__':

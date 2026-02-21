@@ -9,23 +9,26 @@ feature extraction to produce a comprehensive account fit report.
 from pathlib import Path
 import sys
 
-# Add parent directories to path for imports
+# Add parent directory to path for imports
+# This allows imports to work regardless of execution location
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import load_account_config
 from ingest.load_data import load_transactions
 from fees.payu_fee_model import calculate_monthly_fee
 from features.build_features import extract_behavioural_features
+from utils.paths import find_project_root
 
 
 def main():
     """Execute the Silver PAYU fee calculation and behavioural analysis pipeline."""
     
-    # Define paths relative to project root
-    BASE = Path(__file__).resolve().parents[3]
+    # Reliably locate project root
+    PROJECT_ROOT = find_project_root(Path(__file__).resolve())
     
-    config_path = BASE / "configs" / "account_types" / "silver_payu.yaml"
-    tx_path = BASE / "data" / "synthetic" / "transactions_sample.csv"
+    config_path = PROJECT_ROOT / "configs" / "account_types" / "silver_payu.yaml"
+    customers_path = PROJECT_ROOT / "data" / "synthetic" / "customers_sample.csv"
+    tx_path = PROJECT_ROOT / "data" / "synthetic" / "transactions_sample.csv"
     
     # Load configuration
     account_config = load_account_config(str(config_path))

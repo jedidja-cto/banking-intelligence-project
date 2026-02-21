@@ -1,0 +1,90 @@
+# Silver Pay-as-you-use (PAYU) Account Configuration
+# Source: Nedbank Namibia public website
+# Last updated: 2024-01-20
+
+account_type_id: silver_payu
+account_name: "Silver Pay-as-you-use"
+
+# Taxonomy
+customer_segment: personal
+account_family: accounts
+account_category: everyday
+
+# Monthly Fee (OBSERVED)
+monthly_fee: 30  # NAD
+
+# Eligibility Criteria (OBSERVED)
+eligibility:
+  residency: namibian_resident
+  age_min: 18
+  age_max: null  # No upper limit specified
+  income_min: 3000  # NAD gross monthly
+  income_max: 50000  # NAD gross monthly
+
+# KYC Requirements (OBSERVED)
+kyc_requirements:
+  - id_or_passport
+  - proof_of_income
+  - additional_kyc_if_required
+
+# Onboarding Channels (OBSERVED)
+onboarding_channels:
+  - web_callback
+  - facebook_identity_today_selfie
+  - branch
+  - call_center
+
+# Account Capabilities (OBSERVED)
+capabilities:
+  - beneficiaries
+  - transfers
+  - third_party_payments
+  - airtime_purchase
+  - electricity_purchase
+  - card_freeze_unfreeze
+  - atm_withdrawal
+  - in_branch_withdrawal
+  - retail_cash_out
+  - pos_payments
+  - online_payments
+
+# Cross-sell Opportunities (OBSERVED)
+cross_sell:
+  - overdraft
+  - credit_card
+  - personal_loan
+  - home_loan
+  - optional_insurance
+
+# Fee Structure (PARTIALLY OBSERVED)
+fees:
+  model_type: pay_as_you_use
+  monthly_fee_fixed: 30  # NAD (OBSERVED)
+  
+  # Transaction fees (UNKNOWN - using placeholders)
+  # These values are placeholders and should be updated when actual fee structure is available
+  transaction_fees:
+    pos_purchase: null  # Unknown
+    atm_withdrawal: null  # Unknown
+    airtime_purchase: null  # Unknown
+    electricity_purchase: null  # Unknown
+    third_party_payment: null  # Unknown
+    eft_transfer: null  # Unknown
+    income_deposit: 0  # Typically no fee
+  
+  # Fee calculation notes
+  notes: |
+    Transaction fees are not publicly available and are represented as null.
+    Fee calculations will use placeholder value of 0 for unknown fees.
+    Actual costs may vary significantly from estimates.
+    Update this configuration when fee structure becomes available.
+
+# Metadata
+metadata:
+  source: nedbank_namibia_website
+  confidence: high  # For observed fields
+  last_verified: 2024-01-20
+  assumptions:
+    - Transaction fee structure is unknown
+    - Eligibility criteria may have exceptions not documented publicly
+    - Capabilities list may not be exhaustive

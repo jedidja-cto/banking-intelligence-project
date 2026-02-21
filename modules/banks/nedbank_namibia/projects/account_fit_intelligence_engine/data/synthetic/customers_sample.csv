@@ -1,0 +1,6 @@
+customer_id,age,residency,income_gross_monthly,customer_segment,account_category,account_type_id
+CUST_001,28,namibian_resident,15000.00,personal,everyday,silver_payu
+CUST_002,35,namibian_resident,8500.00,personal,everyday,silver_payu
+CUST_003,42,namibian_resident,25000.00,personal,everyday,silver_payu
+CUST_004,31,namibian_resident,12000.00,personal,everyday,silver_payu
+CUST_005,45,namibian_resident,35000.00,personal,everyday,silver_payu

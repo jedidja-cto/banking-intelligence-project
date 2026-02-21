@@ -128,7 +128,10 @@ def generate_customers_and_transactions(n_customers: int = 20, seed: int = SEED)
             'ts': ts.strftime('%Y-%m-%d %H:%M:%S'),
             'amount': -income,
             'type': 'income',
-            'merchant': ''
+            'merchant': '',
+            'channel': '',
+            'atm_owner': '',
+            'pos_scope': ''
         })
         txn_id += 1
         
@@ -139,13 +142,26 @@ def generate_customers_and_transactions(n_customers: int = 20, seed: int = SEED)
             merchant = rng.choice(merchants[txn_type])
             ts = start_date + timedelta(days=rng.randint(1, 30), hours=rng.randint(0, 23), minutes=rng.randint(0, 59))
             
+            # Determine channel based on transaction type
+            if txn_type == 'pos_purchase':
+                channel = 'pos'
+                pos_scope = 'local'
+                atm_owner = ''
+            else:
+                channel = 'online'
+                pos_scope = ''
+                atm_owner = ''
+            
             transactions.append({
                 'transaction_id': f'TXN_{txn_id:05d}',
                 'customer_id': customer_id,
                 'ts': ts.strftime('%Y-%m-%d %H:%M:%S'),
                 'amount': amount,
                 'type': txn_type,
-                'merchant': merchant
+                'merchant': merchant,
+                'channel': channel,
+                'atm_owner': atm_owner,
+                'pos_scope': pos_scope
             })
             txn_id += 1
         
@@ -154,13 +170,19 @@ def generate_customers_and_transactions(n_customers: int = 20, seed: int = SEED)
             amount = round(rng.uniform(200, 1500), 2)
             ts = start_date + timedelta(days=rng.randint(1, 30), hours=rng.randint(0, 23), minutes=rng.randint(0, 59))
             
+            # 70% Nedbank ATM, 30% other bank ATM
+            atm_owner = rng.choices(['nedbank', 'other_bank'], weights=[70, 30], k=1)[0]
+            
             transactions.append({
                 'transaction_id': f'TXN_{txn_id:05d}',
                 'customer_id': customer_id,
                 'ts': ts.strftime('%Y-%m-%d %H:%M:%S'),
                 'amount': amount,
                 'type': 'atm_withdrawal',
-                'merchant': ''
+                'merchant': '',
+                'channel': 'atm',
+                'atm_owner': atm_owner,
+                'pos_scope': ''
             })
             txn_id += 1
         
@@ -181,7 +203,10 @@ def generate_customers_and_transactions(n_customers: int = 20, seed: int = SEED)
                 'ts': ts.strftime('%Y-%m-%d %H:%M:%S'),
                 'amount': amount,
                 'type': txn_type,
-                'merchant': merchant
+                'merchant': merchant,
+                'channel': 'online',
+                'atm_owner': '',
+                'pos_scope': ''
             })
             txn_id += 1
     

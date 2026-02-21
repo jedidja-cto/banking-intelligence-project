@@ -53,10 +53,13 @@ TRANSACTION_SCHEMA = {
     'ts': 'datetime',
     'amount': 'float',
     'type': 'string',
-    'merchant': 'string'  # Can be null
+    'merchant': 'string',  # Can be null
+    'channel': 'string',  # online, atm, pos
+    'atm_owner': 'string',  # nedbank, other_bank (for atm_withdrawal)
+    'pos_scope': 'string'  # local (for pos_purchase)
 }
 
-TRANSACTION_REQUIRED_COLUMNS = list(TRANSACTION_SCHEMA.keys())
+TRANSACTION_REQUIRED_COLUMNS = ['transaction_id', 'customer_id', 'ts', 'amount', 'type', 'merchant']
 
 # Valid transaction types
 VALID_TRANSACTION_TYPES = [

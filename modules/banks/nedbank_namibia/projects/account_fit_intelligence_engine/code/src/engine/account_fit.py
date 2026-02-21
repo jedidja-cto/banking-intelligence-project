@@ -57,10 +57,15 @@ def main():
         fixed_fee = account_config.get('monthly_fee', 30.0)
         
         # Get variable fee from tariff engine
-        variable_fee = variable_fees.get(customer_id, {}).get('variable_total', 0.0)
+        customer_var_fees = variable_fees.get(customer_id, {})
+        variable_fee = customer_var_fees.get('variable_total', 0.0)
+        by_type = customer_var_fees.get('by_type', {})
         
         # Calculate total fee
         total_fee = fixed_fee + variable_fee
+        
+        # Get top 3 fee drivers
+        top_drivers = sorted(by_type.items(), key=lambda x: x[1], reverse=True)[:3]
         
         # Extract behavioural features
         features = extract_behavioural_features(tx_customer)
@@ -75,7 +80,8 @@ def main():
             'total_outflow': features['total_outflow'],
             'fixed_fee': fixed_fee,
             'variable_fee': variable_fee,
-            'total_fee': total_fee
+            'total_fee': total_fee,
+            'top_drivers': top_drivers
         })
     
     # Output multi-customer summary table with stable column widths
@@ -88,11 +94,20 @@ def main():
     print("")
     
     for r in results:
-        # Two-line format per customer for narrow terminals
+        # Multi-line format per customer with fee breakdown
         line1 = f"{r['customer_id']:<11} {r['txn_count']:>3}tx {r['digital_ratio']*100:>5.1f}% {r['behaviour_tag']:<17}"
-        line2 = f"  In: N${r['total_inflow']:>10,.2f}  Out: N${r['total_outflow']:>10,.2f}  Fee: N${r['total_fee']:>5,.2f}"
+        line2 = f"  In: N${r['total_inflow']:>10,.2f}  Out: N${r['total_outflow']:>10,.2f}"
+        line3 = f"  Fixed: N${r['fixed_fee']:>5.2f}  Var: N${r['variable_fee']:>6.2f}  Total: N${r['total_fee']:>6.2f}"
+        
         print(line1)
         print(line2)
+        print(line3)
+        
+        # Show top 3 variable fee drivers if any
+        if r['top_drivers']:
+            drivers_str = "  Top fees: " + ", ".join([f"{tx_type} N${amt:.2f}" for tx_type, amt in r['top_drivers']])
+            print(drivers_str)
+        
         print("")
     
     print("="*58)

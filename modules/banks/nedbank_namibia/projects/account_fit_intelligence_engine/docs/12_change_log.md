@@ -6,6 +6,40 @@ This document tracks all significant changes, updates, and version history for t
 
 ## Version History
 
+### v0.2.1 — Turnover-Aware Deposit Fees + Configurable POS Classification (2026-02-21)
+
+**Status:** Released
+
+**Added:**
+- `customer_segment` field to `Customer` schema: `individual | sme | business`
+- `annual_turnover: Optional[float]` field to `Customer` schema (None = unknown)
+- `cash_deposit` transaction type to `VALID_TRANSACTION_TYPES` and synthetic generator
+- `cash_deposit` fee block in `nedbank_2026_27.yaml` (flat_per_event, N$25 placeholder, turnover_threshold=1.3M)
+- `resolve_deposit_eligibility()` shared helper in `tariff_engine.py` — single source of logic
+- `compute_cash_deposit_fee()` in `tariff_engine.py` — returns fee, eligibility_status, flags dict
+- `deposit_fee_eligibility_status` derived feature in `build_features.py` (imports shared helper)
+- `cash_deposit_count` feature in `build_features.py`
+- Customer loading + `customer_map` in `account_fit.py` engine
+- Per-customer deposit eligibility line in report output (only shown when relevant)
+- Footer `ASSUMPTIONS` block in engine report — flags customers with missing turnover
+
+**Changed:**
+- `account_fit.py` now loads `customers_sample.csv` and wires customer_segment + annual_turnover through the pipeline
+- `generate_synthetic.py` generates segment distribution (~50% individual, ~30% sme, ~20% business) and cash_deposit events for sme/business
+- Total variable fee in output now correctly includes deposit fee contribution
+- `charge_policy_when_turnover_missing: do_not_charge_flag` — conservative safe default
+
+**Key Design Decisions:**
+- No phantom fees: deposit fee = N$0 if no cash_deposit transactions exist for customer
+- `account_class` for POS fees remains config-driven — zero hardcoded values in Python
+- Logic lives in one place (tariff_engine); build_features imports rather than duplicates
+
+**Known Limitations (v0.2.1):**
+- Cash deposit fee value (N$25.00) is a placeholder; update `nedbank_2026_27.yaml` when confirmed
+- Only January 2026 (1-month window) simulated in synthetic data
+
+---
+
 ### v0.1.0 - Initial Scaffold (2024-01-20)
 
 **Status:** Initial development

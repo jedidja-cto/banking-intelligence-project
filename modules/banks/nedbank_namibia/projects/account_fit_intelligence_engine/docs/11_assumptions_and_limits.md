@@ -6,7 +6,7 @@ This document explicitly lists all assumptions made in v0.1 and limitations of t
 
 ## Scope
 
-Comprehensive documentation of what we know, what we assume, and what we cannot do in v0.1.
+Comprehensive documentation of what we know, what we assume, and what we cannot do in v0.2.1.
 
 ## Critical Principle
 
@@ -70,6 +70,35 @@ These are directly observed from Nedbank Namibia's public information:
 - **Reality:** Unknown if conditional pricing exists
 - **Impact:** Simplified fee model may miss important cost factors
 - **Mitigation:** Design extensible fee model for future complexity
+
+### v0.2.1 Assumptions — Cash Deposit Fee & Account Classification
+
+**A1. Missing Annual Turnover → Do Not Charge**
+- **Assumption:** When `annual_turnover` is `NULL` for an sme/business customer, the system does NOT charge a cash deposit fee.
+- **Basis:** Charging an unknown customer is worse than under-charging; the conservative default avoids overcharging.
+- **Behaviour:** Customer is flagged (`turnover_required_for_deposit_fee: true`) and logged in the ASSUMPTIONS footer.
+- **Resolution:** Populate `annual_turnover` from business onboarding data or KYC to unlock correct classification.
+
+**A2. Individuals Are Always Exempt from Cash Deposit Fees**
+- **Assumption:** All customers with `customer_segment = 'individual'` are exempt regardless of any turnover value.
+- **Basis:** Nedbank 2026/27 policy: cash deposit fees apply to businesses, not individual personal accounts.
+- **Behaviour:** `deposit_fee_eligibility_status = 'individual'`, fee = N$0.
+
+**A3. Cash Deposit Fee Value is a Placeholder**
+- **Assumption:** N$25.00 per deposit event used as placeholder.
+- **Reality:** Exact Nedbank Namibia 2026/27 cash deposit tariff not publicly confirmed.
+- **Impact:** Absolute fee amounts in output should not be used for cost projection until value is verified.
+- **Resolution:** Update `nedbank_2026_27.yaml → cash_deposit.fee_if_applicable.value` when tariff is confirmed.
+
+**A4. Config-Driven POS Classification**
+- **Assumption:** `account_class` is always read from `configs/account_types/silver_payu.yaml`.
+- **Behaviour:** No hardcoded account class strings in Python code; changing YAML immediately changes POS fee path.
+- **Verification:** Switch `account_class: current` → `savings` → rerun engine → POS fee changes N$6 → N$5.
+
+**A5. No Phantom Fees**
+- **Assumption:** Cash deposit fee is only charged when actual `cash_deposit` transactions exist for a customer.
+- **Basis:** Charging a fee without a transaction event is incorrect.
+- **Behaviour:** If `cash_deposit` count = 0 for a customer, deposit fee = N$0 always.
 
 ### Behaviour Assumptions
 

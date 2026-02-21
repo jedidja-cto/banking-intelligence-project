@@ -6,7 +6,7 @@ This document describes the behaviour features extracted from customer transacti
 
 ## Scope
 
-Feature engineering approach for v0.1, focusing on transaction-based behaviour patterns for Silver PAYU account analysis.
+Feature engineering approach for v0.2.1, focusing on transaction-based behaviour patterns for Silver PAYU account analysis. Includes deposit fee eligibility as a derived feature.
 
 ## Observed
 
@@ -87,6 +87,38 @@ For feature design:
 - High diversity → Needs full-featured account
 - Low diversity → May be over-paying for unused features
 - Specific patterns → Targeted account recommendations
+
+#### 5. Deposit Fee Eligibility Feature (v0.2.1)
+
+**Purpose:** Classify each customer's cash deposit fee eligibility status based on segment and annual turnover. Feeds directly into fee calculation.
+
+**Feature name:** `deposit_fee_eligibility_status`
+
+| Value | Condition | Deposit Fee |
+|-------|-----------|-------------|
+| `individual` | `customer_segment == 'individual'` | N$0 (always exempt) |
+| `sme_below_threshold` | segment is sme/business AND `annual_turnover ≤ N$1,300,000` | N$0 (SME concession) |
+| `sme_above_threshold` | segment is sme/business AND `annual_turnover > N$1,300,000` | N$25 × deposit_count |
+| `unknown` | segment is sme/business AND `annual_turnover is None` | N$0 + flagged |
+
+**Computation:**
+```python
+# Single source of logic — no duplication
+from fees.tariff_engine import resolve_deposit_eligibility
+
+status = resolve_deposit_eligibility(
+    customer_segment='sme',
+    annual_turnover=1_500_000,
+    turnover_threshold=1_300_000
+)  # returns 'sme_above_threshold'
+```
+
+**Key Design Decisions:**
+- Logic lives in `tariff_engine.resolve_deposit_eligibility` (shared helper)
+- `build_features.py` imports from tariff_engine — zero duplicated logic
+- `account_fit.py` also imports `compute_cash_deposit_fee` from tariff_engine
+- **No phantom fees:** deposit fee is only charged if `cash_deposit` transactions exist
+- Missing turnover → conservative default (do not charge, flag for review)
 
 #### 4. Temporal Features (Future)
 
@@ -237,7 +269,12 @@ Low importance (v0.1):
 - Amount statistics
 - Simple diversity metrics
 
-**v0.2: Enhanced Features**
+**v0.2.1: Deposit Eligibility (Done)**
+- `deposit_fee_eligibility_status` derived feature
+- `cash_deposit_count` transaction counter
+- Shared `resolve_deposit_eligibility` helper
+
+**v0.3: Enhanced Features (Planned)**
 - Temporal patterns
 - Channel preferences
 - Merchant categories

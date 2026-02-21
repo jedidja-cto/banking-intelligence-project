@@ -5,21 +5,30 @@ This module defines the expected schemas for customer and transaction data
 and provides validation functions to ensure data quality.
 """
 
-from dataclasses import dataclass
-from typing import List, Tuple
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 
 @dataclass
 class Customer:
-    """Customer profile data structure."""
+    """Customer profile data structure.
+
+    Fields added in v0.2.1:
+        customer_segment: Segment type — 'individual', 'sme', or 'business'.
+            Determines cash deposit fee eligibility (individuals are always exempt).
+        annual_turnover: Annual business turnover in NAD. Only relevant for sme/business.
+            If None, turnover is unknown — deposit fee will not be charged and the
+            customer will be flagged for manual review.
+    """
     customer_id: str
     age: int
     residency: str
     income_gross_monthly: float
-    customer_segment: str
+    customer_segment: str          # 'individual' | 'sme' | 'business'
     account_category: str
     account_type_id: str
+    annual_turnover: Optional[float] = None   # NAD; None = unknown
 
 
 @dataclass
@@ -34,6 +43,8 @@ class Transaction:
 
 
 # Customer Schema Definition
+# annual_turnover is optional — NULL means unknown (do not charge deposit fee).
+# customer_segment values: 'individual' | 'sme' | 'business'
 CUSTOMER_SCHEMA = {
     'customer_id': 'string',
     'age': 'int',
@@ -41,7 +52,8 @@ CUSTOMER_SCHEMA = {
     'income_gross_monthly': 'float',
     'customer_segment': 'string',
     'account_category': 'string',
-    'account_type_id': 'string'
+    'account_type_id': 'string',
+    'annual_turnover': 'float',      # optional — may be NaN/None
 }
 
 CUSTOMER_REQUIRED_COLUMNS = list(CUSTOMER_SCHEMA.keys())
@@ -62,6 +74,7 @@ TRANSACTION_SCHEMA = {
 TRANSACTION_REQUIRED_COLUMNS = ['transaction_id', 'customer_id', 'ts', 'amount', 'type', 'merchant']
 
 # Valid transaction types
+# cash_deposit added in v0.2.1 — low frequency, sme/business only in synthetic data.
 VALID_TRANSACTION_TYPES = [
     'pos_purchase',
     'airtime_purchase',
@@ -69,7 +82,8 @@ VALID_TRANSACTION_TYPES = [
     'third_party_payment',
     'atm_withdrawal',
     'eft_transfer',
-    'income'
+    'income',
+    'cash_deposit',
 ]
 
 # Valid residency values

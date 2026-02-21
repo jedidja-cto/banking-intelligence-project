@@ -6,7 +6,7 @@ This document defines the data schemas for customers, transactions, and derived 
 
 ## Scope
 
-Data model for v0.1 synthetic data, designed for extensibility to real data sources in future versions.
+Data model for v0.2.1 synthetic data (updated from v0.1), designed for extensibility to real data sources in future versions.
 
 ## Observed
 
@@ -41,19 +41,26 @@ For synthetic data generation:
 | age | integer | Customer age in years | 28 | 18-100 |
 | residency | string | Residency status | namibian_resident | Values: namibian_resident, non_resident |
 | income_gross_monthly | float | Gross monthly income (NAD) | 15000.00 | 0-1000000 |
-| customer_segment | string | Banking segment | personal | Fixed: personal (for v0.1) |
+| customer_segment | string | Business segment **(v0.2.1)** | sme | `individual` \| `sme` \| `business` |
 | account_category | string | Account category | everyday | Fixed: everyday (for v0.1) |
 | account_type_id | string | Current account type | silver_payu | Values: silver_payu, savvy, gold_payu, etc. |
+| annual_turnover | float (optional) | Annual business turnover (NAD) **(v0.2.1)** | 1500000.00 | `NULL` = unknown; only relevant for sme/business |
+
+**Segment Rules (v0.2.1):**
+- `individual`: personal use customers — always exempt from cash deposit fees
+- `sme`: small/medium enterprise — deposit fee applies only if `annual_turnover > 1,300,000`
+- `business`: large business — same deposit fee rule as sme
+- `annual_turnover = NULL`: turnover unknown — deposit fee NOT charged; customer flagged
 
 **Eligibility Mapping:**
 - Silver PAYU: age >= 18, residency = namibian_resident, income 3000-50000
 
 **Sample Data:**
 ```csv
-customer_id,age,residency,income_gross_monthly,customer_segment,account_category,account_type_id
-CUST_001,28,namibian_resident,15000.00,personal,everyday,silver_payu
-CUST_002,35,namibian_resident,8500.00,personal,everyday,silver_payu
-CUST_003,42,namibian_resident,25000.00,personal,everyday,silver_payu
+customer_id,age,residency,income_gross_monthly,customer_segment,account_category,account_type_id,annual_turnover
+CUST_001,28,namibian_resident,15000.00,individual,everyday,silver_payu,
+CUST_002,35,namibian_resident,8500.00,sme,everyday,silver_payu,950000.00
+CUST_003,42,namibian_resident,25000.00,business,everyday,silver_payu,2800000.00
 ```
 
 ### Transaction Schema
@@ -73,13 +80,14 @@ CUST_003,42,namibian_resident,25000.00,personal,everyday,silver_payu
 
 | Type | Description | Fee Applicability |
 |------|-------------|-------------------|
-| pos_purchase | Point of sale purchase | Per-transaction fee (unknown) |
-| airtime_purchase | Airtime top-up | Per-transaction fee (unknown) |
-| electricity_purchase | Electricity payment | Per-transaction fee (unknown) |
-| third_party_payment | Payment to third party | Per-transaction fee (unknown) |
-| atm_withdrawal | ATM cash withdrawal | Per-transaction fee (unknown) |
-| eft_transfer | Electronic funds transfer | Per-transaction fee (unknown) |
-| income | Salary/income deposit | Typically no fee |
+| pos_purchase | Point of sale purchase | Per-transaction flat fee (config-driven, by account_class) |
+| airtime_purchase | Airtime top-up | Per-transaction flat fee |
+| electricity_purchase | Electricity payment | Per-transaction flat fee |
+| third_party_payment | Payment to third party | Per-transaction flat fee |
+| atm_withdrawal | ATM cash withdrawal | Per-step (Nedbank) or base+step-cap (other bank) |
+| eft_transfer | Electronic funds transfer | Per-transaction flat fee |
+| income | Salary/income deposit | No fee |
+| cash_deposit | Branch/teller cash deposit **(v0.2.1)** | flat_per_event — only for sme/business with turnover > N$1.3M |
 
 **Sample Data:**
 ```csv
@@ -100,6 +108,7 @@ TXN_00004,CUST_001,2024-01-20 08:00:00,-12000.00,income,Employer
 | txn_amount_monthly_avg | float | Average monthly transaction volume | SUM(amount) / months |
 | pos_purchase_freq | float | POS purchase frequency | COUNT(type=pos_purchase) / months |
 | atm_withdrawal_freq | float | ATM withdrawal frequency | COUNT(type=atm_withdrawal) / months |
+| cash_deposit_count | integer | Branch cash deposit count **(v0.2.1)** | COUNT(type=cash_deposit) |
 | airtime_purchase_freq | float | Airtime purchase frequency | COUNT(type=airtime_purchase) / months |
 | electricity_purchase_freq | float | Electricity payment frequency | COUNT(type=electricity_purchase) / months |
 | eft_transfer_freq | float | EFT transfer frequency | COUNT(type=eft_transfer) / months |
@@ -108,6 +117,7 @@ TXN_00004,CUST_001,2024-01-20 08:00:00,-12000.00,income,Employer
 | avg_transaction_amount | float | Average transaction size | AVG(amount WHERE amount > 0) |
 | max_transaction_amount | float | Largest transaction | MAX(amount) |
 | transaction_diversity | float | Unique transaction types used | COUNT(DISTINCT type) |
+| deposit_fee_eligibility_status | string | Deposit fee eligibility **(v0.2.1)** | See eligibility rules — `individual` \| `sme_below_threshold` \| `sme_above_threshold` \| `unknown` |
 
 ### Fee Calculation Schema
 

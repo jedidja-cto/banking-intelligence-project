@@ -51,3 +51,14 @@ pos:
     current:
       rule_type: flat
       value: 6.00
+
+cash_deposit:
+  # Nedbank Namibia 2026/27: free for individuals and SMEs with turnover <= threshold.
+  # Chargeable for businesses/SMEs with annual turnover > threshold.
+  # NOTE: value is a placeholder; update when Nedbank publishes exact cash deposit tariff.
+  turnover_threshold: 1300000
+  charge_policy_when_turnover_missing: "do_not_charge_flag"
+  fee_if_applicable:
+    rule_type: flat_per_event       # fee applied per cash_deposit transaction
+    value: 25.00                    # NAD (placeholder — Nedbank 2026/27)
+    applies_to_txn_type: cash_deposit

@@ -6,7 +6,7 @@ multiple fee rule types: flat, per_step, and base_plus_step_cap.
 """
 
 import math
-from typing import Dict, Any
+from typing import Any, Dict, Optional, Tuple
 import yaml
 import pandas as pd
 
@@ -218,3 +218,121 @@ def compute_variable_fees(
         }
     
     return results
+
+
+# ---------------------------------------------------------------------------
+# v0.2.1 — Cash Deposit Fee: shared helper + fee calculator
+# ---------------------------------------------------------------------------
+
+def resolve_deposit_eligibility(
+    customer_segment: str,
+    annual_turnover: Optional[float],
+    turnover_threshold: float
+) -> str:
+    """
+    Determine a customer's cash deposit fee eligibility status.
+
+    This is the single source of logic shared by tariff_engine.compute_cash_deposit_fee
+    and features.build_features.extract_behavioural_features to avoid duplication.
+
+    Args:
+        customer_segment: 'individual', 'sme', or 'business'
+        annual_turnover:  Annual NAD turnover; None means unknown
+        turnover_threshold: NAD threshold above which deposit fee applies
+
+    Returns:
+        One of: 'individual' | 'sme_below_threshold' | 'sme_above_threshold' | 'unknown'
+
+    Example:
+        >>> resolve_deposit_eligibility('individual', None, 1_300_000)
+        'individual'
+        >>> resolve_deposit_eligibility('sme', 500_000, 1_300_000)
+        'sme_below_threshold'
+        >>> resolve_deposit_eligibility('sme', None, 1_300_000)
+        'unknown'
+        >>> resolve_deposit_eligibility('business', 2_000_000, 1_300_000)
+        'sme_above_threshold'
+    """
+    if customer_segment == 'individual':
+        return 'individual'
+    if annual_turnover is None:
+        return 'unknown'
+    if annual_turnover <= turnover_threshold:
+        return 'sme_below_threshold'
+    return 'sme_above_threshold'
+
+
+def compute_cash_deposit_fee(
+    customer_segment: str,
+    annual_turnover: Optional[float],
+    deposit_txn_count: int,
+    config: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Compute cash deposit fees for a single customer.
+
+    Rules (Nedbank Namibia 2026/27):
+    - Individuals are ALWAYS exempt (fee = 0).
+    - No cash_deposit transactions → fee = 0 regardless of segment/turnover.
+    - Turnover unknown → fee = 0, customer flagged; charge_policy_when_turnover_missing
+      in config must be 'do_not_charge_flag' (fail-safe default).
+    - Turnover ≤ threshold → fee = 0 (SME concession).
+    - Turnover > threshold → fee = flat_per_event value × deposit_txn_count.
+
+    NO PHANTOM FEES: if deposit_txn_count == 0, fee is always 0.
+
+    Args:
+        customer_segment:  'individual', 'sme', or 'business'
+        annual_turnover:   Annual NAD turnover; None means unknown
+        deposit_txn_count: Number of cash_deposit transactions for this customer
+        config:            The full fee_schedule dict (from nedbank_2026_27.yaml);
+                           must contain a 'cash_deposit' block
+
+    Returns:
+        Dict with:
+            'fee':               float   — total deposit fee (NAD)
+            'eligibility_status': str   — see resolve_deposit_eligibility
+            'flags':             Dict    — e.g. {'turnover_required_for_deposit_fee': True}
+
+    Example:
+        >>> fs = {'cash_deposit': {'turnover_threshold': 1300000,
+        ...     'charge_policy_when_turnover_missing': 'do_not_charge_flag',
+        ...     'fee_if_applicable': {'rule_type': 'flat_per_event', 'value': 25.0}}}
+        >>> compute_cash_deposit_fee('sme', 2_000_000, 3, fs)
+        {'fee': 75.0, 'eligibility_status': 'sme_above_threshold', 'flags': {}}
+        >>> compute_cash_deposit_fee('sme', None, 3, fs)
+        {'fee': 0.0, 'eligibility_status': 'unknown', 'flags': {'turnover_required_for_deposit_fee': True}}
+        >>> compute_cash_deposit_fee('individual', None, 3, fs)
+        {'fee': 0.0, 'eligibility_status': 'individual', 'flags': {}}
+    """
+    deposit_cfg = config.get('cash_deposit', {})
+    turnover_threshold = deposit_cfg.get('turnover_threshold', 1_300_000)
+    fee_rule = deposit_cfg.get('fee_if_applicable', {})
+    per_event_fee = fee_rule.get('value', 0.0)
+
+    eligibility_status = resolve_deposit_eligibility(
+        customer_segment, annual_turnover, turnover_threshold
+    )
+
+    flags: Dict[str, Any] = {}
+
+    # Individuals are always exempt
+    if eligibility_status == 'individual':
+        return {'fee': 0.0, 'eligibility_status': eligibility_status, 'flags': flags}
+
+    # No phantom fees — if no deposit transactions exist, there's nothing to charge
+    if deposit_txn_count == 0:
+        return {'fee': 0.0, 'eligibility_status': eligibility_status, 'flags': flags}
+
+    # Turnover unknown — do not charge; flag for manual review
+    if eligibility_status == 'unknown':
+        flags['turnover_required_for_deposit_fee'] = True
+        return {'fee': 0.0, 'eligibility_status': eligibility_status, 'flags': flags}
+
+    # SME/business below threshold — exempt
+    if eligibility_status == 'sme_below_threshold':
+        return {'fee': 0.0, 'eligibility_status': eligibility_status, 'flags': flags}
+
+    # SME/business above threshold — charge per event
+    fee = round(per_event_fee * deposit_txn_count, 2)
+    return {'fee': fee, 'eligibility_status': eligibility_status, 'flags': flags}

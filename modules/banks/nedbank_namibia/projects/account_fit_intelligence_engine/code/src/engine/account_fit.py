@@ -62,20 +62,37 @@ def main():
         })
     
     # Output multi-customer summary table
-    print("\n" + "="*80)
+    print("\n" + "="*90)
     print("Silver PAYU Multi-Customer Intelligence Report")
-    print("="*80)
+    print("="*90)
     print(f"\nAccount Type: {account_config['account_type_id']}")
     print(f"Total Customers: {len(unique_customers)}")
     
-    print("\n" + "-"*80)
-    print(f"{'Customer ID':<12} {'Txns':<6} {'Digital%':<10} {'Behaviour':<18} {'Inflow':<12} {'Outflow':<12} {'Est.Fee':<10}")
-    print("-"*80)
+    print("\n" + "-"*90)
+    print(f"{'Customer ID':<13} {'Txns':<6} {'Digital%':<11} {'Behaviour':<18} {'Inflow':<15} {'Outflow':<15} {'Est.Fee':<12}")
+    print("-"*90)
     
     for r in results:
-        print(f"{r['customer_id']:<12} {r['txn_count']:<6} {r['digital_ratio']*100:<10.1f} {r['behaviour_tag']:<18} N${r['total_inflow']:<11.2f} N${r['total_outflow']:<11.2f} N${r['total_estimated_fee']:<9.2f}")
+        inflow_str = f"N${r['total_inflow']:,.2f}"
+        outflow_str = f"N${r['total_outflow']:,.2f}"
+        fee_str = f"N${r['total_estimated_fee']:,.2f}"
+        print(f"{r['customer_id']:<13} {r['txn_count']:<6} {r['digital_ratio']*100:<11.1f} {r['behaviour_tag']:<18} {inflow_str:<15} {outflow_str:<15} {fee_str:<12}")
     
-    print("="*80 + "\n")
+    print("="*90)
+    
+    # Footer summary
+    print("\nBehaviour Distribution:")
+    behaviour_counts = {}
+    for r in results:
+        tag = r['behaviour_tag']
+        behaviour_counts[tag] = behaviour_counts.get(tag, 0) + 1
+    
+    for tag, count in sorted(behaviour_counts.items()):
+        print(f"  {tag:<18} {count:>3} customers")
+    
+    avg_digital_ratio = sum(r['digital_ratio'] for r in results) / len(results)
+    print(f"\nAverage Digital Ratio: {avg_digital_ratio:.1%}")
+    print("="*90 + "\n")
 
 
 if __name__ == '__main__':

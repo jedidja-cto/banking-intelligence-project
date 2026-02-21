@@ -1,12 +1,20 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
+*.pyo
+*.pyd
 *$py.class
 
 # venv
 .venv/
 venv/
 ENV/
+
+# cache dirs
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # notebooks
 .ipynb_checkpoints/

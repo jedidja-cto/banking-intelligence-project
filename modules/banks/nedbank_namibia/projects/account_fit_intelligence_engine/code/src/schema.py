@@ -68,13 +68,16 @@ TRANSACTION_SCHEMA = {
     'merchant': 'string',  # Can be null
     'channel': 'string',  # online, atm, pos
     'atm_owner': 'string',  # nedbank, other_bank (for atm_withdrawal)
-    'pos_scope': 'string'  # local (for pos_purchase)
+    'pos_scope': 'string',  # local (for pos_purchase)
+    'transfer_scope': 'string',  # v0.3.1: optional; "to_nedbank_account" | "to_other_bank" | ""
 }
 
 TRANSACTION_REQUIRED_COLUMNS = ['transaction_id', 'customer_id', 'ts', 'amount', 'type', 'merchant']
 
 # Valid transaction types
 # cash_deposit added in v0.2.1 — low frequency, sme/business only in synthetic data.
+# cashout added in v0.3.0 — retail cash dispensed via POS terminal (e.g. CashOut at Shoprite).
+# eft_transfer_internal / eft_transfer_external added in v0.3.1 — EFT sub-types by bank scope.
 VALID_TRANSACTION_TYPES = [
     'pos_purchase',
     'airtime_purchase',
@@ -82,8 +85,11 @@ VALID_TRANSACTION_TYPES = [
     'third_party_payment',
     'atm_withdrawal',
     'eft_transfer',
+    'eft_transfer_internal',   # v0.3.1: EFT to Nedbank account
+    'eft_transfer_external',   # v0.3.1: EFT to other bank
     'income',
     'cash_deposit',
+    'cashout',                 # v0.3.0: retail CashOut via POS terminal
 ]
 
 # Valid residency values

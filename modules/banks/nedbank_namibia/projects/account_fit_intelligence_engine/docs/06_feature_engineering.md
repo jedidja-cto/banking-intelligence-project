@@ -336,3 +336,30 @@ Low importance (v0.1):
 - See `05_data_model.md` for input data schemas
 - See `04_system_architecture.md` for pipeline integration
 - See `code/src/features/build_features.py` for implementation
+
+---
+
+## Feature → KPI Contract (v0.3.0)
+
+New feature keys added in v0.3.0 to support the Generic KPI Engine. All keys default to `0` if the transaction type is absent — completely backward-compatible with PAYU.
+
+| Feature Key | Derivation | Consumed by KPI |
+|---|---|---|
+| `nedbank_atm_withdrawal_count` | ATM withdrawals where `atm_owner == 'nedbank'` | `free_atm_utilisation_ratio`, `excess_atm_withdrawals`, `excess_atm_cost` |
+| `cashout_count` | Transactions where `type == 'cashout'` | `cashout_adoption_ratio` |
+| `digital_txn_count` | Transactions in `DIGITAL_TYPES` set (raw count) | `digital_ratio` |
+| `total_payments` | All non-income, non-cash_deposit transactions | `paid_rail_dependency_ratio` |
+| `pos_purchase_count` | Transactions where `type == 'pos_purchase'` | (available for future KPIs) |
+| `charged_txn_count` | Transactions with fee > 0 (via real tariff engine per-txn) | `paid_rail_dependency_ratio` |
+
+**`charged_txn_count` computation:**
+- Calls `tariff_engine.compute_variable_fees()` on the customer's transactions.
+- Counts transactions whose total fee contribution > 0.
+- Single source of truth — no approximation, no duplicated logic.
+- `account_fit.py` passes `fee_schedule` only when `kpi_engine` is active (zero cost on PAYU path).
+
+**`excess_atm_cost` (engine-computed, not a formula):**
+- KPIEngine sorts Nedbank ATM withdrawal amounts ascending.
+- Applies real Nedbank ATM fee rule (`per_step`, N$10 per N$300 withdrawn) to the excess withdrawals only (beyond the free tier of 3).
+- See `code/src/engine/kpi_engine.py::KPIEngine.compute_excess_atm_cost()`.
+

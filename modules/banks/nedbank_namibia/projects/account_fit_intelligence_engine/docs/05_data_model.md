@@ -6,7 +6,7 @@ This document defines the data schemas for customers, transactions, and derived 
 
 ## Scope
 
-Data model for v0.2.1 synthetic data (updated from v0.1), designed for extensibility to real data sources in future versions.
+Data model for v0.3.0, extended from v0.2.1 with KPI output schema and feature contract additions. Designed for extensibility to real data sources in future versions.
 
 ## Observed
 
@@ -215,3 +215,30 @@ TXN_00004,CUST_001,2024-01-20 08:00:00,-12000.00,income,Employer
 - See `06_feature_engineering.md` for feature calculation details
 - See `04_system_architecture.md` for data flow
 - See `code/src/schema.py` for implementation
+
+---
+
+## KPI Output Structure (v0.3.0)
+
+`KPIEngine.compute_all()` returns a structured dict per customer:
+
+```python
+{
+    "kpis": {
+        "free_atm_utilisation_ratio": float,   # atm_withdrawal_count / max(free, 1)
+        "excess_atm_withdrawals": float,        # max(nedbank_atm_count - free_tier, 0)
+        "digital_ratio": float,                 # digital_txn_count / max(txn_count, 1)
+        "paid_rail_dependency_ratio": float,    # charged_txn_count / max(total_payments, 1)
+        "cashout_adoption_ratio": float,        # cashout_count / max(atm + cashout, 1)
+        "excess_atm_cost": float,               # engine-computed via real tariff rule (NAD)
+        "account_fit_score": float,             # 0–100 (computed from signals)
+    },
+    "account_fit_score": float,                 # Top-level convenience accessor
+    "migration_signals": list[str],             # Names of fired signals, e.g. ["payu_upgrade_candidate"]
+    "insights": list[str],                      # Human-readable message strings
+}
+```
+
+**`account_fit_score` scale:** 100 = excellent fit (no signals). Each signal deducts its configured penalty. Clamped to [0, 100].
+
+**Signal conditions:** All conditions must be `True` for a signal to fire. Evaluated by `SafeExpressionEvaluator` (AST-validated, no unsafe eval).

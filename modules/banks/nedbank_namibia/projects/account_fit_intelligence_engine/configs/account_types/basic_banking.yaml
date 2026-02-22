@@ -1,0 +1,76 @@
+# Basic Banking Account Configuration
+# Nedbank Namibia — Basic Banking product
+# Added: v0.3.0 | Extended: v0.3.1
+
+account_type_id: basic_banking
+account_type: basic_banking          # alias — used by benefit engine (v0.3.1)
+account_name: "Basic Banking"
+
+# Taxonomy
+customer_segment: personal
+account_family: accounts
+account_category: everyday
+
+# Account Classification
+account_class: "savings"  # Basic Banking is a savings account class for POS fee determination
+
+# KPI profile — triggers generic KPI engine in account_fit.py
+kpi_profile: basic_banking
+
+# Fee schedule to use
+fee_schedule: nedbank_2026_27
+
+# Monthly fee
+monthly_fee: 0  # Basic Banking has no fixed monthly fee (true pay-as-you-use base)
+
+# Free Tier (v0.3.0 / v0.3.1)
+free_tier:
+  free_nedbank_atm_withdrawals: 3                      # First 3 Nedbank ATM withdrawals free per month
+  free_online_banking_subscription: true               # Online banking access is free
+  free_eft_to_nedbank: true                            # Legacy bool flag (kept for backward-compat)
+  free_online_subscription: true                       # v0.3.1: online banking subscription benefit
+  free_eft_to_nedbank_txn_types: [eft_transfer_internal]  # v0.3.1: free EFT txn types (list)
+  free_eft_to_nedbank_scope: "to_nedbank_account"      # v0.3.1: scope descriptor for reporting
+
+# Eligibility Criteria
+eligibility:
+  residency: namibian_resident
+  age_min: 18
+  age_max: null
+  income_min: null   # No minimum income requirement
+  income_max: null
+
+# KYC Requirements
+kyc_requirements:
+  - id_or_passport
+  - proof_of_residence
+
+# Onboarding Channels
+onboarding_channels:
+  - branch
+  - web_callback
+  - call_center
+
+# Account Capabilities
+capabilities:
+  - beneficiaries
+  - transfers
+  - third_party_payments
+  - airtime_purchase
+  - electricity_purchase
+  - card_freeze_unfreeze
+  - atm_withdrawal
+  - pos_payments
+  - online_payments
+  - cashout
+
+# Metadata
+metadata:
+  source: nedbank_namibia_website
+  confidence: medium
+  last_verified: 2026-02-22
+  assumptions:
+    - Free ATM tier confirmed at 3 Nedbank ATM withdrawals per month
+    - Account class set to savings; update if Nedbank classifies differently
+    - Monthly fee assumed zero; Basic Banking may have transactional costs only
+    - free_eft_to_nedbank_txn_types introduced v0.3.1 — internal EFT to Nedbank accounts is free

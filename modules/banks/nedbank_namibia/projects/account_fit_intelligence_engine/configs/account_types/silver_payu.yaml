@@ -13,6 +13,9 @@ account_category: everyday
 # Account Classification
 account_class: "current"  # Used for POS fee determination (current vs savings)
 
+# KPI profile — null means no KPI engine is instantiated for this account type (v0.3.0)
+kpi_profile: null
+
 # Monthly Fee (OBSERVED)
 monthly_fee: 30  # NAD
 

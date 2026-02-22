@@ -1,0 +1,115 @@
+# Basic Banking KPI Configuration
+# All formulas reference keys from extract_behavioural_features() + free_tier values.
+# Formulas are evaluated by SafeExpressionEvaluator (AST-validated — no unsafe eval).
+# excess_atm_cost is marked computed=true and is derived via the real tariff engine.
+# v0.3.1 — added benefits mapping, cashout_shift_candidate, digital_shift_candidate signals,
+#           rewrote insight_outputs to signal-keyed messages.
+
+account_type: basic_banking
+
+north_star:
+  name: account_fit_score
+  scale: "0-100"
+  base: 100
+  description: "Higher score = better fit for Basic Banking. Deductions applied per active migration signal."
+
+free_tier:
+  free_nedbank_atm_withdrawals: 3
+  free_online_banking_subscription: true
+  free_eft_to_nedbank: true
+  free_online_subscription: true
+  free_eft_to_nedbank_txn_types: [eft_transfer_internal]
+  free_eft_to_nedbank_scope: "to_nedbank_account"
+
+# ---------------------------------------------------------------------------
+# Benefit definitions (v0.3.1)
+# Each entry maps benefit_name -> allowance_key (in free_tier) + usage_feature_key (in features)
+# The KPI engine computes usage, allowance, and remaining for each benefit.
+# ---------------------------------------------------------------------------
+benefits:
+  free_atm_withdrawals:
+    allowance_key: free_nedbank_atm_withdrawals     # int -> remaining = max(allowance-usage, 0)
+    usage_feature_key: nedbank_atm_withdrawal_count
+
+  free_eft_to_nedbank:
+    allowance_key: free_eft_to_nedbank_txn_types    # list -> remaining = "included"; report usage
+    usage_feature_key: eft_to_nedbank_count
+
+  free_online_subscription:
+    allowance_key: free_online_subscription          # bool True -> remaining = "included"
+    usage_feature_key: online_subscription_used
+
+kpis:
+
+  free_atm_utilisation_ratio:
+    description: "How much of the free ATM allowance the customer uses (>1.0 = over limit)"
+    formula: "atm_withdrawal_count / max(free_nedbank_atm_withdrawals, 1)"
+
+  excess_atm_withdrawals:
+    description: "Number of ATM withdrawals above the free tier"
+    formula: "max(nedbank_atm_withdrawal_count - free_nedbank_atm_withdrawals, 0)"
+
+  digital_ratio:
+    description: "Proportion of transactions that are digital (non-ATM, non-cashout)"
+    formula: "digital_txn_count / max(txn_count, 1)"
+
+  paid_rail_dependency_ratio:
+    description: "Proportion of transactions that incur a fee (PAYU rail exposure)"
+    formula: "charged_txn_count / max(total_payments, 1)"
+
+  cashout_adoption_ratio:
+    description: "How often customer uses retail cashout vs ATM (higher = lower ATM cost)"
+    formula: "cashout_count / max(atm_withdrawal_count + cashout_count, 1)"
+
+  excess_atm_cost:
+    description: "Actual cost of excess Nedbank ATM withdrawals using real tariff engine fee rule"
+    computed: true   # Not evaluated by SafeExpressionEvaluator — computed by KPIEngine.compute_excess_atm_cost()
+
+  account_fit_score:
+    description: "North-star score 0-100. Computed by engine from migration signals."
+    computed: true   # Computed by KPIEngine.compute_account_fit_score()
+
+# ---------------------------------------------------------------------------
+# Migration signals (v0.3.1 additions use "all:" key style)
+# ---------------------------------------------------------------------------
+migration_signals:
+
+  payu_upgrade_candidate:
+    description: "Customer behaviour suggests PAYU features would reduce costs or improve service"
+    penalty: 20      # Points deducted from account_fit_score when this signal fires
+    conditions:      # "conditions:" style — supported for backward-compat
+      - "excess_atm_withdrawals > 0"
+      - "paid_rail_dependency_ratio > 0.25"
+      - "digital_ratio > 0.6"
+
+  cashout_shift_candidate:
+    description: "Customer withdraws frequently from ATM but never uses retail CashOut"
+    penalty: 10
+    all:             # "all:" style — v0.3.1
+      - "atm_withdrawal_count >= 4"
+      - "cashout_count == 0"
+
+  digital_shift_candidate:
+    description: "Low digital ratio with meaningful fee exposure — digital shift would reduce costs"
+    penalty: 10
+    all:             # "all:" style — v0.3.1
+      - "digital_ratio < 0.55"
+      - "charged_txn_count >= 5"
+
+# ---------------------------------------------------------------------------
+# Insight outputs — signal-keyed (v0.3.1 rewrite)
+# Each key matches a migration_signal name; good_fit is the no-signal fallback.
+# ---------------------------------------------------------------------------
+insight_outputs:
+
+  good_fit:
+    message: "You are using mostly free services and staying within your free ATM limit. Basic Banking is a strong fit."
+
+  payu_upgrade_candidate:
+    message: "You exceeded your 3 free Nedbank ATM withdrawals and paid avoidable fees. Consider a PAYU account to offset ATM costs through a lower monthly fee trade-off."
+
+  cashout_shift_candidate:
+    message: "You made 4+ ATM withdrawals but never used retail CashOut. Using CashOut at Shoprite, Spar or Pick n Pay would reduce your monthly fees."
+
+  digital_shift_candidate:
+    message: "Moving more payments to online or app channels would lower your paid-rail fee exposure significantly."

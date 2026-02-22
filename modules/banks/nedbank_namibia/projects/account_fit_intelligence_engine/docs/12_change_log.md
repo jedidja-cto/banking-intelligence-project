@@ -6,6 +6,35 @@ This document tracks all significant changes, updates, and version history for t
 
 ## Version History
 
+### v0.3.0 — Generic KPI Engine + Basic Banking (2026-02-21)
+
+**Status:** Released
+
+**New Files:**
+- `configs/account_types/basic_banking.yaml` — Basic Banking account config (free_tier, kpi_profile)
+- `configs/kpis/basic_banking_kpis.yaml` — KPI definitions, migration signals, insight messages
+- `code/src/engine/kpi_engine.py` — Generic KPI engine + AST-validated SafeExpressionEvaluator
+
+**Changed:**
+- `code/src/schema.py` — Added `cashout` to `VALID_TRANSACTION_TYPES`
+- `code/src/ingest/generate_synthetic.py` — Generates cashout transactions (cash_heavy archetype, 3–8/month); Nedbank ATM floor raised to 4 for free-tier testing
+- `code/src/features/build_features.py` — Added 6 new feature keys: `nedbank_atm_withdrawal_count`, `cashout_count`, `digital_txn_count`, `total_payments`, `pos_purchase_count`, `charged_txn_count` (all default 0 — backward-compatible); new params: `fee_schedule`, `account_class`
+- `code/src/engine/account_fit.py` — Added `load_kpi_config_for_account()`, `DEFAULT_ACCOUNT` constant, KPI summary block per customer; PAYU v0.2.1 output unchanged
+- `configs/account_types/silver_payu.yaml` — Added `kpi_profile: null` (multi-account architecture readiness)
+
+**Architecture decisions:**
+- `SafeExpressionEvaluator`: uses `ast.parse` + allow-list of safe AST node types. No bare `eval()`. Only `max()`/`min()` calls allowed. All other builtins blanked.
+- `excess_atm_cost`: computed via real Nedbank ATM `per_step` tariff rule (N$10/N$300 step), applied only to withdrawals beyond the free tier of 3. Not a formula scalar.
+- `charged_txn_count`: derived by calling `tariff_engine.compute_variable_fees()` — single source of truth, no approximation.
+- PAYU path: KPI engine activated only when `kpi_profile` is set in account YAML. `kpi_profile: null` in `silver_payu.yaml` ensures zero impact on PAYU output.
+
+**Verification:**
+- `generate_synthetic.py` — exit 0; produces cashout txns and nedbank ATM withdrawals > 3 for cash_heavy customers
+- `account_fit.py` (basic_banking) — exit 0; KPI block printed per customer, payu_upgrade_candidate signal fires for cash_heavy customers, excess_atm_cost > 0 where applicable
+- `account_fit.py` (silver_payu) — exit 0; output equivalent to v0.2.1
+
+---
+
 ### v0.2.1 — Turnover-Aware Deposit Fees + Configurable POS Classification (2026-02-21)
 
 **Status:** Released

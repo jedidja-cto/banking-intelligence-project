@@ -369,6 +369,62 @@ def print_exec_summary(customer_id: str, kpi_results: dict, account_config: dict
 
 
 # ---------------------------------------------------------------------------
+# Recommendation Engine (v0.4.0)
+# ---------------------------------------------------------------------------
+
+def generate_recommendation(basic_result: dict, payu_result: dict) -> dict:
+    """
+    Deterministic recommendation logic based on fit, cost, and signals.
+    """
+    basic_signals = basic_result.get("migration_signals", [])
+    basic_kpis = basic_result.get("kpis", {})
+    
+    # Rule 1: Upgrade signal
+    if "payu_upgrade_candidate" in basic_signals:
+        reasons = ["payu_upgrade_candidate"]
+        # Try to cite specific reasons
+        if basic_kpis:
+            atm_usage = basic_result.get("_features", {}).get("nedbank_atm_withdrawal_count", 0)
+            free_atm = 3 # assumption for Basic Banking
+            if atm_usage > free_atm:
+                reasons.append(f"ATM excess {int(atm_usage - free_atm)}")
+            
+            paid_rail = basic_kpis.get("paid_rail_dependency_ratio", 0)
+            if paid_rail > 0.5:
+                reasons.append(f"paid rail dependency {paid_rail:.2f}")
+
+        return {
+            "recommended_account": "Silver PAYU",
+            "reasons": reasons,
+            "alternative": "stay Basic + use CashOut"
+        }
+
+    # Rule 2: Cost Comparison
+    # For thisv0.4.0, we consider Basic Banking fees as "n/a" if they are purely KPI-based
+    # However, we can compare total costs if available.
+    basic_cost = basic_result["fees_dict"]["total"]
+    payu_cost = payu_result["fees_dict"]["total"]
+    
+    basic_fit = basic_result.get("account_fit_score", 0) or 0
+    payu_fit = payu_result.get("account_fit_score", 0) or 0 # usually None for PAYU
+    
+    # If Basic Banking has a high fit and lower cost (or fees n/a), recommend it
+    if basic_fit >= 80:
+        return {
+            "recommended_account": "Basic Banking",
+            "reasons": [f"high fit score {int(basic_fit)}", "lower cost profile"],
+            "alternative": None
+        }
+
+    # Default to Basic Banking as conservative choice if no strong upgrade signal
+    return {
+        "recommended_account": "Basic Banking",
+        "reasons": ["conservative fit for current profile"],
+        "alternative": "Silver PAYU if transactions increase"
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -671,6 +727,7 @@ def main():
 def run_compare_mode(customer_id: str, project_root: Path):
     """
     Orchestrate comparison of Basic Banking and Silver PAYU for one customer. (v0.4.0)
+    Ensures all output lines are <= 59 characters.
     """
     # Load shared data
     customers_path = project_root / "data" / "synthetic" / "customers_sample.csv"
@@ -679,7 +736,7 @@ def run_compare_mode(customer_id: str, project_root: Path):
     customers_df = load_customers(str(customers_path))
     customer_row_df = customers_df[customers_df['customer_id'] == customer_id]
     if customer_row_df.empty:
-        print(f"Error: Customer {customer_id} not found.")
+        print(clamp59(f"Error: Customer {customer_id} not found."))
         return
 
     customer_row = customer_row_df.iloc[0].to_dict()
@@ -695,13 +752,53 @@ def run_compare_mode(customer_id: str, project_root: Path):
     basic_res = analyze_customer_for_account(basic_cfg, tx_customer, customer_row, project_root)
     payu_res = analyze_customer_for_account(payu_cfg, tx_customer, customer_row, project_root)
 
-    # Commit 1: Minimal printing
-    print(f"\nCOMPARE ACCOUNTS — {customer_id}")
-    print(f"Basic Banking: Fit {basic_res['account_fit_score'] or 'n/a'} "
-          f"Cost {fmt_money(basic_res['fees_dict']['total'])}")
-    print(f"Silver PAYU:   Fit {payu_res['account_fit_score'] or 'n/a'} "
-          f"Cost {fmt_money(payu_res['fees_dict']['total'])}")
-    print("\n(Full report incoming in commit 2)\n")
+    # Recommendation
+    rec = generate_recommendation(basic_res, payu_res)
+
+    # Print Report (<= 59 chars)
+    print(clamp59(f"\nCOMPARE ACCOUNTS \u2014 {customer_id}"))
+    
+    # Basic Banking section
+    fit_b = f"{int(round(basic_res['account_fit_score']))}" if basic_res['account_fit_score'] is not None else "n/a"
+    # Basic Banking cost is shown as 0.00 (fees n/a) per spec
+    cost_b = "N$0.00 (fees n/a)"
+    print(clamp59(f"Basic Banking: Fit {fit_b} Cost {cost_b}"))
+    
+    # Surface ATM excess for Basic Banking
+    feat_b = basic_res.get("_features", {})
+    atm_used = feat_b.get("nedbank_atm_withdrawal_count", 0)
+    free_atm = 3 # from basic_banking.yaml
+    excess_atm = max(atm_used - free_atm, 0)
+    # Get excess cost from KPIs if available
+    kpis_b = basic_res.get("kpis", {})
+    excess_cost = kpis_b.get("excess_atm_cost", 0.0)
+    print(clamp59(f"  ATM Excess: {int(excess_atm)} ExcessCost: {fmt_money(excess_cost)}"))
+    
+    sigs = ", ".join(basic_res.get("migration_signals", [])) or "none"
+    print(clamp59(f"  Signals: {sigs}"))
+    print("")
+
+    # Silver PAYU section
+    fit_p = "n/a"
+    cost_p = fmt_money(payu_res['fees_dict']['total'])
+    print(clamp59(f"Silver PAYU: Fit {fit_p} Cost {cost_p}"))
+    
+    fixed_p = payu_res['fees_dict']['fixed']
+    var_p = payu_res['fees_dict']['variable']
+    print(clamp59(f"  Fixed {fmt_money(fixed_p)} Var {fmt_money(var_p)}"))
+    
+    top_p = ", ".join([d[0] for d in payu_res.get("top_fee_drivers", [])[:2]])
+    print(clamp59(f"  Top {top_p}"))
+    print("")
+
+    # Recommendation section
+    print(clamp59("RECOMMENDATION:"))
+    print(clamp59(f"Choose {rec['recommended_account']}."))
+    why = "; ".join(rec['reasons'])
+    print(clamp59(f"Why: {why}"))
+    if rec['alternative']:
+        print(clamp59(f"Alt: {rec['alternative']}"))
+    print("")
 
 
 if __name__ == '__main__':

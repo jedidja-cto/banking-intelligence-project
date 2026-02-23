@@ -239,6 +239,12 @@ pytest tests/
 pytest tests/ -v
 ```
 
+### Run Golden Regression Tests
+
+```bash
+python -m pytest tests/test_golden_outputs.py -q
+```
+
 ### Run Smoke Test
 
 ```bash

@@ -1,0 +1,308 @@
+
+======================================================================
+Basic Banking Multi-Customer Intelligence Report  v0.3.1
+======================================================================
+
+Account Type: basic_banking
+Account Class: savings  (POS pricing path: savings)
+Total Customers: 20
+
+CUST_001    [IND]  35tx  37.1% cash_heavy       
+  In: N$ 32,350.65  Out: N$ 20,558.13
+  Fixed: N$ 0.00  Var: N$490.30  Total: N$490.30
+  Top fees: atm_withdrawal N$455.90, third_party_payment N$15.50, pos_purchase N$10.00
+  -- CUST_001 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.37  PaidRail: 0.68
+  ATM: 9 (Free 3, Excess 6)  ExcessCost: N$210.00
+  CashOut: 7  EFT->Ned: 3  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_002    [IND]  41tx  26.8% cash_heavy       
+  In: N$  6,243.54  Out: N$ 26,894.13
+  Fixed: N$ 0.00  Var: N$763.70  Total: N$763.70
+  Top fees: atm_withdrawal N$730.60, third_party_payment N$15.50, pos_purchase N$10.00
+  -- CUST_002 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.27  PaidRail: 0.75
+  ATM: 12 (Free 3, Excess 9)  ExcessCost: N$360.00
+  CashOut: 7  EFT->Ned: 2  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_003    [BUS]  48tx  33.3% cash_heavy       
+  In: N$ 13,678.97  Out: N$ 93,213.09
+  Fixed: N$ 0.00  Var: N$695.50  Total: N$695.50
+  Deposit: sme_below_threshold       FREE (5 events)
+  Top fees: atm_withdrawal N$649.20, third_party_payment N$15.50, pos_purchase N$15.00
+  -- CUST_003 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.33  PaidRail: 0.79
+  ATM: 13 (Free 3, Excess 10)  ExcessCost: N$320.00
+  CashOut: 5  EFT->Ned: 4  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_004    [IND]  43tx  90.7% digital_first    
+  In: N$ 15,322.16  Out: N$ 20,274.98
+  Fixed: N$ 0.00  Var: N$378.30  Total: N$378.30
+  Top fees: third_party_payment N$155.00, atm_withdrawal N$120.00, pos_purchase N$100.00
+  -- CUST_004 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.91  PaidRail: 0.83
+  ATM: 3 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 8  EFT->Ned: 6  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_005    [SME]  46tx  78.3% digital_first    
+  In: N$ 30,890.45  Out: N$ 55,241.27
+  Fixed: N$ 0.00  Var: N$338.10  Total: N$338.10
+  Deposit: sme_below_threshold       FREE (3 events)
+  Top fees: atm_withdrawal N$150.90, third_party_payment N$124.00, pos_purchase N$50.00
+  -- CUST_005 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 80/100  Digi: 0.78  PaidRail: 0.74
+  ATM: 4 (Free 3, Excess 1)  ExcessCost: N$50.00
+  CashOut: 6  EFT->Ned: 6  OnlineSub: yes
+  Signals: payu_upgrade_candidate
+  Next: You exceeded your 3 free Nedbank ATM wit
+  ---------------------------------------------------------
+
+CUST_006    [SME]  34tx  38.2% cash_heavy       
+  In: N$ 28,854.67  Out: N$ 21,506.62
+  Fixed: N$ 0.00  Var: N$590.30  Total: N$590.30
+  Deposit: sme_above_threshold       N$50.00 (2 events)
+  Top fees: atm_withdrawal N$489.70, cash_deposit N$50.00, third_party_payment N$31.00
+  -- CUST_006 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.38  PaidRail: 0.84
+  ATM: 10 (Free 3, Excess 7)  ExcessCost: N$270.00
+  CashOut: 3  EFT->Ned: 2  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_007    [IND]  36tx  77.8% digital_first    
+  In: N$  4,735.76  Out: N$ 15,452.08
+  Fixed: N$ 0.00  Var: N$352.80  Total: N$352.80
+  Top fees: atm_withdrawal N$230.90, third_party_payment N$62.00, pos_purchase N$50.00
+  -- CUST_007 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 80/100  Digi: 0.78  PaidRail: 0.74
+  ATM: 5 (Free 3, Excess 2)  ExcessCost: N$100.00
+  CashOut: 2  EFT->Ned: 4  OnlineSub: yes
+  Signals: payu_upgrade_candidate
+  Next: You exceeded your 3 free Nedbank ATM wit
+  ---------------------------------------------------------
+
+CUST_008    [SME]  45tx  80.0% digital_first    
+  In: N$ 21,413.49  Out: N$ 81,518.07
+  Fixed: N$ 0.00  Var: N$420.20  Total: N$420.20
+  Deposit: sme_above_threshold       N$125.00 (5 events)
+  Top fees: cash_deposit N$125.00, atm_withdrawal N$114.60, third_party_payment N$93.00
+  -- CUST_008 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.80  PaidRail: 0.77
+  ATM: 2 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 3  EFT->Ned: 6  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_009    [IND]  41tx  36.6% cash_heavy       
+  In: N$ 24,091.33  Out: N$ 26,521.94
+  Fixed: N$ 0.00  Var: N$647.00  Total: N$647.00
+  Top fees: atm_withdrawal N$579.70, third_party_payment N$31.00, pos_purchase N$30.00
+  -- CUST_009 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.37  PaidRail: 0.78
+  ATM: 13 (Free 3, Excess 10)  ExcessCost: N$360.00
+  CashOut: 11  EFT->Ned: 2  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_010    [SME]  45tx  80.0% digital_first    
+  In: N$ 10,823.92  Out: N$ 73,697.23
+  Fixed: N$ 0.00  Var: N$374.70  Total: N$374.70
+  Deposit: sme_above_threshold       N$125.00 (5 events)
+  Top fees: cash_deposit N$125.00, third_party_payment N$108.50, atm_withdrawal N$74.60
+  -- CUST_010 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.80  PaidRail: 0.67
+  ATM: 2 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 5  EFT->Ned: 7  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_011    [SME]  44tx  84.1% digital_first    
+  In: N$ 17,435.90  Out: N$ 62,971.76
+  Fixed: N$ 0.00  Var: N$321.80  Total: N$321.80
+  Deposit: sme_below_threshold       FREE (3 events)
+  Top fees: third_party_payment N$139.50, atm_withdrawal N$125.00, pos_purchase N$55.00
+  -- CUST_011 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.84  PaidRail: 0.60
+  ATM: 2 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 2  EFT->Ned: 11  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_012    [IND]  29tx  31.0% cash_heavy       
+  In: N$  6,137.74  Out: N$ 16,636.04
+  Fixed: N$ 0.00  Var: N$479.90  Total: N$479.90
+  Top fees: atm_withdrawal N$413.40, third_party_payment N$46.50, pos_purchase N$20.00
+  -- CUST_012 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.31  PaidRail: 0.68
+  ATM: 7 (Free 3, Excess 4)  ExcessCost: N$170.00
+  CashOut: 8  EFT->Ned: 2  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_013    [SME]  50tx  30.0% cash_heavy       
+  In: N$ 27,953.10  Out: N$ 93,831.58
+  Fixed: N$ 0.00  Var: N$784.20  Total: N$784.20
+  Deposit: unknown                   FREE (5 events)
+  Top fees: atm_withdrawal N$700.10, third_party_payment N$46.50, pos_purchase N$30.00
+  -- CUST_013 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.30  PaidRail: 0.82
+  ATM: 17 (Free 3, Excess 14)  ExcessCost: N$490.00
+  CashOut: 7  EFT->Ned: 1  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_014    [SME]  37tx  29.7% cash_heavy       
+  In: N$ 28,768.18  Out: N$ 32,359.34
+  Fixed: N$ 0.00  Var: N$673.00  Total: N$673.00
+  Deposit: sme_above_threshold       N$50.00 (2 events)
+  Top fees: atm_withdrawal N$599.70, cash_deposit N$50.00, pos_purchase N$20.00
+  -- CUST_014 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.30  PaidRail: 0.71
+  ATM: 13 (Free 3, Excess 10)  ExcessCost: N$380.00
+  CashOut: 6  EFT->Ned: 4  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_015    [SME]  36tx  61.1% utilities_focused
+  In: N$  9,592.37  Out: N$ 64,345.11
+  Fixed: N$ 0.00  Var: N$370.40  Total: N$370.40
+  Deposit: sme_above_threshold       N$100.00 (4 events)
+  Top fees: atm_withdrawal N$195.00, cash_deposit N$100.00, third_party_payment N$46.50
+  -- CUST_015 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 80/100  Digi: 0.61  PaidRail: 0.74
+  ATM: 6 (Free 3, Excess 3)  ExcessCost: N$110.00
+  CashOut: 2  EFT->Ned: 4  OnlineSub: yes
+  Signals: payu_upgrade_candidate
+  Next: You exceeded your 3 free Nedbank ATM wit
+  ---------------------------------------------------------
+
+CUST_016    [IND]  53tx  92.5% digital_first    
+  In: N$ 33,239.56  Out: N$ 23,338.22
+  Fixed: N$ 0.00  Var: N$261.80  Total: N$261.80
+  Top fees: pos_purchase N$115.00, atm_withdrawal N$104.60, third_party_payment N$31.00
+  -- CUST_016 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.92  PaidRail: 0.65
+  ATM: 2 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 5  EFT->Ned: 12  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_017    [IND]  43tx  72.1% digital_first    
+  In: N$ 28,465.24  Out: N$ 18,845.30
+  Fixed: N$ 0.00  Var: N$395.30  Total: N$395.30
+  Top fees: atm_withdrawal N$271.80, third_party_payment N$62.00, pos_purchase N$45.00
+  -- CUST_017 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 80/100  Digi: 0.72  PaidRail: 0.76
+  ATM: 7 (Free 3, Excess 4)  ExcessCost: N$150.00
+  CashOut: 4  EFT->Ned: 5  OnlineSub: yes
+  Signals: payu_upgrade_candidate
+  Next: You exceeded your 3 free Nedbank ATM wit
+  ---------------------------------------------------------
+
+CUST_018    [BUS]  46tx  84.8% digital_first    
+  In: N$ 23,821.37  Out: N$ 67,857.52
+  Fixed: N$ 0.00  Var: N$352.30  Total: N$352.30
+  Deposit: sme_above_threshold       N$125.00 (5 events)
+  Top fees: cash_deposit N$125.00, third_party_payment N$108.50, pos_purchase N$75.00
+  -- CUST_018 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.85  PaidRail: 0.68
+  ATM: 0 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 3  EFT->Ned: 11  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_019    [SME]  50tx  90.0% digital_first    
+  In: N$  7,762.33  Out: N$ 47,542.88
+  Fixed: N$ 0.00  Var: N$178.80  Total: N$178.80
+  Deposit: unknown                   FREE (3 events)
+  Top fees: third_party_payment N$62.00, pos_purchase N$60.00, atm_withdrawal N$40.00
+  -- CUST_019 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 100/100  Digi: 0.90  PaidRail: 0.57
+  ATM: 1 (Free 3, Excess 0)  ExcessCost: N$0.00
+  CashOut: 4  EFT->Ned: 15  OnlineSub: yes
+  Signals: none
+  Next: You are using mostly free services and s
+  ---------------------------------------------------------
+
+CUST_020    [IND]  36tx  72.2% digital_first    
+  In: N$ 32,121.65  Out: N$ 15,574.00
+  Fixed: N$ 0.00  Var: N$352.80  Total: N$352.80
+  Top fees: atm_withdrawal N$229.60, third_party_payment N$77.50, airtime_purchase N$20.70
+  -- CUST_020 BASIC BANKING — EXEC SUMMARY --
+  ---------------------------------------------------------
+  Fit: 80/100  Digi: 0.72  PaidRail: 0.86
+  ATM: 5 (Free 3, Excess 2)  ExcessCost: N$90.00
+  CashOut: 2  EFT->Ned: 2  OnlineSub: yes
+  Signals: payu_upgrade_candidate
+  Next: You exceeded your 3 free Nedbank ATM wit
+  ---------------------------------------------------------
+
+======================================================================
+
+Behaviour Distribution:
+  cash_heavy          8 customers
+  digital_first      11 customers
+  utilities_focused   1 customers
+
+Average Digital Ratio: 61.3%
+Average Total Fee:     N$461.06
+Average Fit Score:     95.0 / 100
+Customers with signal: 5 / 20
+
+Basic Banking Rollups:
+  Exceeding free ATM tier (3): 13 / 20
+  cashout_shift_candidate:  0 / 20
+  payu_upgrade_candidate:   5 / 20
+
+----------------------------------------------------------------------
+ASSUMPTIONS:
+  * 2 customer(s) had missing annual_turnover with cash deposit activity
+    -> cash deposit fee NOT charged (policy: do_not_charge_flag)
+    -> flagged for manual turnover verification
+  * account_class read from YAML — no hardcoded values
+  * Deposit fee value (N$25.00) is a placeholder pending Nedbank tariff publication
+  * KPI engine formulas validated via AST SafeExpressionEvaluator — no unsafe eval
+  * excess_atm_cost derived from real Nedbank ATM per_step fee rule (N$10/N$300)
+======================================================================
+

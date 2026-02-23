@@ -65,6 +65,29 @@ _ACCOUNT_CONFIG_MAP = {
 
 
 # ---------------------------------------------------------------------------
+# Formatting & Utilities (v0.4.0)
+# ---------------------------------------------------------------------------
+
+def fmt_money(amount: float) -> str:
+    """Format a NAD monetary value: N$XX.XX"""
+    if amount is None:
+        return "N$0.00"
+    return f"N${amount:.2f}"
+
+
+def clamp59(s: str) -> str:
+    """Ensure string length <= 59 chars (truncate if longer)."""
+    if len(s) > 59:
+        return s[:56] + "..."
+    return s
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -137,12 +160,144 @@ def _exec_line(content: str) -> str:
 
 def _fmt_money(amount: float) -> str:
     """Format a NAD monetary value: N$XX.XX"""
-    return f"N${amount:.2f}"
+    return fmt_money(amount)
 
 
 def _fmt_yn(value: int) -> str:
     """Format 0/1 as yes/no."""
     return "yes" if value else "no"
+
+
+# ---------------------------------------------------------------------------
+# Shared Analysis Logic (v0.4.0)
+# ---------------------------------------------------------------------------
+
+def analyze_customer_for_account(
+    account_config: dict,
+    txns_df: pd.DataFrame,
+    customer_row: dict,
+    project_root: Path
+) -> dict:
+    """
+    Evaluate a specific account type for a single customer.
+    Pure function (no printing, no global mutations).
+    """
+    from fees.tariff_engine import (
+        load_fee_schedule,
+        compute_variable_fees,
+        compute_cash_deposit_fee,
+    )
+    from features.build_features import extract_behavioural_features
+
+    # 1. Setup paths and engine state
+    fee_schedule_path = project_root / "configs" / "fee_schedules" / "nedbank_2026_27.yaml"
+    fee_schedule = load_fee_schedule(str(fee_schedule_path))
+    account_class = account_config.get('account_class', 'current')
+
+    kpi_config = load_kpi_config_for_account(account_config, project_root)
+    kpi_engine = KPIEngine(kpi_config) if kpi_config else None
+
+    # 2. Extract Customer Info
+    customer_segment = customer_row.get('customer_segment', 'individual')
+    annual_turnover = customer_row.get('annual_turnover', None)
+    if pd.isna(annual_turnover):
+        annual_turnover = None
+
+    # 3. Compute Fees (if account has no KPI profile, we treat it as fee-centric)
+    # Actually, we should compute fees for both if possible, but spec says:
+    # "PAYU uses fee engine path, Basic Banking uses KPI engine path"
+    # "If fees not computed for that account: cost must be 0.00 but must be labelled as 'fees n/a'"
+
+    fixed_fee = account_config.get('monthly_fee', 0.0)
+    variable_fee = 0.0
+    fee_drivers = []
+    deposit_fee = 0.0
+    eligibility_status = None
+    turnover_missing_flag = False
+
+    # Variable fees from tariff engine
+    var_fees_result = compute_variable_fees(txns_df, fee_schedule, account_class)
+    # result is a dict keyed by customer_id
+    if not txns_df.empty:
+        cust_id = txns_df.iloc[0]['customer_id']
+        customer_var_fees = var_fees_result.get(cust_id, {})
+        tx_variable_fee = customer_var_fees.get('variable_total', 0.0)
+        by_type_map = customer_var_fees.get('by_type', {})
+
+        # Cash deposit fee
+        deposit_txn_count = int((txns_df['type'] == 'cash_deposit').sum())
+        deposit_result = compute_cash_deposit_fee(
+            customer_segment, annual_turnover, deposit_txn_count, fee_schedule,
+        )
+        deposit_fee = deposit_result['fee']
+        eligibility_status = deposit_result['eligibility_status']
+        if deposit_result['flags'].get('turnover_required_for_deposit_fee'):
+            turnover_missing_flag = True
+
+        variable_fee = round(tx_variable_fee + deposit_fee, 2)
+
+        # Drivers
+        merged_drivers = dict(by_type_map)
+        if deposit_fee > 0:
+            merged_drivers['cash_deposit'] = merged_drivers.get('cash_deposit', 0.0) + deposit_fee
+        fee_drivers = sorted(merged_drivers.items(), key=lambda x: x[1], reverse=True)
+
+    total_fee = round(fixed_fee + variable_fee, 2)
+
+    # 4. Behavioral Features & KPIs
+    turnover_threshold = fee_schedule.get('cash_deposit', {}).get('turnover_threshold', 1_300_000)
+    features = extract_behavioural_features(
+        txns_df,
+        customer_segment=customer_segment,
+        annual_turnover=annual_turnover,
+        turnover_threshold=turnover_threshold,
+        fee_schedule=fee_schedule if kpi_engine else None,
+        account_class=account_class,
+    )
+
+    kpi_results = None
+    fit_score = None
+    signals = []
+    insights = []
+
+    if kpi_engine:
+        kpi_out = kpi_engine.compute_all(
+            features=features,
+            customer_txns=txns_df,
+            fee_schedule=fee_schedule,
+            account_config=account_config,
+        )
+        kpi_results = kpi_out.get("kpis")
+        fit_score = kpi_out.get("account_fit_score")
+        signals = kpi_out.get("migration_signals", [])
+        insights = kpi_out.get("insights", [])
+
+    return {
+        "account_type_id": account_config.get("account_type_id", "unknown"),
+        "account_class": account_class,
+        "inflow": features.get("total_inflow", 0.0),
+        "outflow": features.get("total_outflow", 0.0),
+        "fees": {
+            "fixed": float(fixed_fee),
+            "variable": float(variable_fee),
+            "total": float(total_fee)
+        } if not kpi_engine else None,  # Basic Banking (KPI-based) might not "compute" fees in this sense
+        # Wait, the rule says: "If fees not computed for that account: cost must be 0.00 but must be labelled as 'fees n/a'"
+        # I'll return the fees regardless, and let the formatter decide.
+        "fees_dict": {
+            "fixed": float(fixed_fee),
+            "variable": float(variable_fee),
+            "total": float(total_fee)
+        },
+        "kpis": kpi_results,
+        "account_fit_score": fit_score,
+        "migration_signals": signals,
+        "insights": insights,
+        "flags": {"turnover_missing_for_deposit_fee": turnover_missing_flag},
+        "deposit_fee_eligibility_status": eligibility_status,
+        "top_fee_drivers": fee_drivers,
+        "_features": features  # useful for debugging/formatting
+    }
 
 
 def print_exec_summary(customer_id: str, kpi_results: dict, account_config: dict) -> None:
@@ -220,7 +375,6 @@ def print_exec_summary(customer_id: str, kpi_results: dict, account_config: dict
 def main():
     """Execute the account fit analysis pipeline for the configured account type."""
 
-    # v0.3.1: argparse replaces DEFAULT_ACCOUNT constant
     parser = argparse.ArgumentParser(
         description="Account Fit Intelligence Engine — Nedbank Namibia"
     )
@@ -230,7 +384,30 @@ def main():
         choices=list(_ACCOUNT_CONFIG_MAP.keys()),
         help="Account type to analyse (default: basic_banking)"
     )
+    parser.add_argument(
+        "--mode",
+        choices=["single", "compare"],
+        default="single",
+        help="Mode: single (all customers) or compare (one customer, both accounts)"
+    )
+    parser.add_argument(
+        "--customer",
+        help="Specific customer ID for compare mode"
+    )
+
     args = parser.parse_args()
+
+    if args.mode == "compare" and not args.customer:
+        parser.error("--customer is required when --mode is compare")
+
+    PROJECT_ROOT = find_project_root(Path(__file__).resolve())
+
+    # --- Mode: COMPARE ---
+    if args.mode == "compare":
+        run_compare_mode(args.customer, PROJECT_ROOT)
+        return
+
+    # --- Mode: SINGLE (Legacy/Default) ---
     account_type = args.account
 
     PROJECT_ROOT = find_project_root(Path(__file__).resolve())
@@ -489,6 +666,42 @@ def main():
         print("  * KPI engine formulas validated via AST SafeExpressionEvaluator — no unsafe eval")
         print("  * excess_atm_cost derived from real Nedbank ATM per_step fee rule (N$10/N$300)")
     print("=" * 70 + "\n")
+
+
+def run_compare_mode(customer_id: str, project_root: Path):
+    """
+    Orchestrate comparison of Basic Banking and Silver PAYU for one customer. (v0.4.0)
+    """
+    # Load shared data
+    customers_path = project_root / "data" / "synthetic" / "customers_sample.csv"
+    tx_path = project_root / "data" / "synthetic" / "transactions_sample.csv"
+
+    customers_df = load_customers(str(customers_path))
+    customer_row_df = customers_df[customers_df['customer_id'] == customer_id]
+    if customer_row_df.empty:
+        print(f"Error: Customer {customer_id} not found.")
+        return
+
+    customer_row = customer_row_df.iloc[0].to_dict()
+
+    transactions = load_transactions(str(tx_path))
+    tx_customer = transactions[transactions["customer_id"] == customer_id]
+
+    # Load account configs
+    basic_cfg = load_account_config(str(project_root / "configs" / "account_types" / "basic_banking.yaml"))
+    payu_cfg = load_account_config(str(project_root / "configs" / "account_types" / "silver_payu.yaml"))
+
+    # Analyze both
+    basic_res = analyze_customer_for_account(basic_cfg, tx_customer, customer_row, project_root)
+    payu_res = analyze_customer_for_account(payu_cfg, tx_customer, customer_row, project_root)
+
+    # Commit 1: Minimal printing
+    print(f"\nCOMPARE ACCOUNTS — {customer_id}")
+    print(f"Basic Banking: Fit {basic_res['account_fit_score'] or 'n/a'} "
+          f"Cost {fmt_money(basic_res['fees_dict']['total'])}")
+    print(f"Silver PAYU:   Fit {payu_res['account_fit_score'] or 'n/a'} "
+          f"Cost {fmt_money(payu_res['fees_dict']['total'])}")
+    print("\n(Full report incoming in commit 2)\n")
 
 
 if __name__ == '__main__':

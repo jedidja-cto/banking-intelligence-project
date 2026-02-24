@@ -1,0 +1,5 @@
+account_set_id: retail_personal
+display_name: "Retail Personal"
+accounts:
+  - basic_banking
+  - silver_payu

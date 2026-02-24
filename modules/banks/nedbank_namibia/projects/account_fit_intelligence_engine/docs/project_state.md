@@ -1,10 +1,16 @@
 # Project State
 
 ## Current Version
-**v0.4.1**
+**v0.5.0**
 
 ## Status
-**HARDENED — READY FOR NEXT PHASE**
+**PORTFOLIO READY — BATCH INTELLIGENCE ACTIVE**
+
+## Portfolio Mode
+- **New Logic**: Portfolio engine for batch aggregation and target ranking.
+- **Reporting**: Concise executive summary and top-target lists.
+- **Rules**: Enforced ≤59 char terminal clamp via `clamp59()`.
+- **Export**: JSON export for downstream systems.
 
 ## Frozen Outputs
 The following single-account outputs are snapshot-frozen and protected by golden regression tests:
@@ -23,4 +29,4 @@ Golden tests exist in `tests/test_golden_outputs.py` and must remain green for a
 - **Reproduction**: Deterministic synthetic data generation verified.
 
 ## Next Target
-**v0.5.0 — Portfolio Compare Mode**
+**v0.6.0 — Dashboard Integration**

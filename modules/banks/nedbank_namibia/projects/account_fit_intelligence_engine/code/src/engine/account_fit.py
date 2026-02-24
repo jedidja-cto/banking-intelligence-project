@@ -34,9 +34,11 @@ Changes in v0.3.1:
 """
 
 from pathlib import Path
-import argparse
 import sys
+import argparse
 import yaml
+import json
+from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -465,21 +467,47 @@ def main():
     )
     parser.add_argument(
         "--mode",
-        choices=["single", "compare"],
+        choices=["single", "compare", "portfolio"],
         default="single",
-        help="Mode: single (all customers) or compare (one customer, both accounts)"
+        help="Mode: single (all customers), compare (one customer, both accounts), or portfolio (batch)"
     )
     parser.add_argument(
         "--customer",
         help="Specific customer ID for compare mode"
+    )
+    parser.add_argument(
+        "--account-set",
+        help="Account set ID for portfolio mode (e.g., retail_personal)"
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Limit for top-target lists in portfolio mode (default: 10)"
+    )
+    parser.add_argument(
+        "--export-json",
+        help="Optional path to export portfolio results as JSON"
     )
 
     args = parser.parse_args()
 
     if args.mode == "compare" and not args.customer:
         parser.error("--customer is required when --mode is compare")
+    
+    if args.mode == "portfolio" and not args.account_set:
+        parser.error("--account-set is required when --mode is portfolio")
+
+    if args.mode == "single" and not args.account:
+        # Default is already set, but logic requires --account presence for clarity
+        pass
 
     PROJECT_ROOT = find_project_root(Path(__file__).resolve())
+
+    # --- Mode: PORTFOLIO ---
+    if args.mode == "portfolio":
+        run_portfolio_mode(args.account_set, PROJECT_ROOT, args.limit, args.export_json)
+        return
 
     # --- Mode: COMPARE ---
     if args.mode == "compare":
@@ -831,6 +859,103 @@ def run_compare_mode(customer_id: str, project_root: Path):
     if rec['alternative']:
         print(clamp59(f"Alt: {rec['alternative']}"))
     print("")
+
+
+def print_portfolio_report(aggregate: dict, targets: dict):
+    """
+    Print a concise portfolio intelligence report (v0.5.0).
+    Max line width: 59 chars.
+    """
+    agg = aggregate
+    print(clamp59("\n" + "=" * 59))
+    print(clamp59("PORTFOLIO \u2014 Retail Personal"))
+    print(clamp59(f"Customers: {agg['customer_count']}"))
+    
+    rc = agg["recommendation_counts"]
+    print(clamp59("Recommendations:"))
+    print(clamp59(f"  Basic: {rc['choose_basic_banking']}  PAYU: {rc['choose_silver_payu']}  Unknown: {rc['unknown']}"))
+    
+    sc = agg["signal_counts"]
+    print(clamp59("\nSignals (Basic):"))
+    print(clamp59(f"  payu_upgrade_candidate: {sc['payu_upgrade_candidate']}"))
+    print(clamp59(f"  cashout_shift_candidate: {sc['cashout_shift_candidate']}"))
+    print(clamp59(f"  digital_shift_candidate: {sc['digital_shift_candidate']}"))
+    
+    print(clamp59("\nATM pressure:"))
+    print(clamp59(f"  Exceed free ATM tier: {agg['atm_pressure_count']} / {agg['customer_count']}"))
+    
+    fp = agg["fee_pain"]
+    print(clamp59("\nPAYU fees (available only):"))
+    avg_str = fmt_money(fp['avg_payu_cost']) if fp['avg_payu_cost'] > 0 else "n/a"
+    tot_str = fmt_money(fp['total_payu_cost']) if fp['total_payu_cost'] > 0 else "n/a"
+    print(clamp59(f"  Avg PAYU cost: {avg_str}"))
+    print(clamp59(f"  Total PAYU cost: {tot_str}"))
+
+    print(clamp59("\nTOP PAYU UPGRADE TARGETS"))
+    for t in targets["top_payu_upgrade_targets"]:
+        print(clamp59(f"  {t['customer_id']:<10} {t['reason']}"))
+
+    print(clamp59("\nTOP CASHOUT SHIFT TARGETS"))
+    for t in targets["top_cashout_shift_targets"]:
+        print(clamp59(f"  {t['customer_id']:<10} {t['reason']}"))
+
+    print(clamp59("\nTOP DIGITAL SHIFT TARGETS"))
+    for t in targets["top_digital_shift_targets"]:
+        print(clamp59(f"  {t['customer_id']:<10} {t['reason']}"))
+
+    print(clamp59("=" * 59 + "\n"))
+
+
+
+
+def run_portfolio_mode(account_set_id: str, project_root: Path, limit: int, export_json_path: str = None):
+    """
+    Orchestrate portfolio analysis for a set of accounts across all customers. (v0.5.0)
+    """
+    from engine.portfolio_engine import run_portfolio
+
+    # 1. Load account set config
+    set_cfg_path = project_root / "configs" / "account_sets" / f"{account_set_id}.yaml"
+    if not set_cfg_path.exists():
+        print(clamp59(f"Error: Account set config {account_set_id} not found."))
+        return
+    
+    with open(set_cfg_path, "r") as f:
+        set_config = yaml.safe_load(f)
+
+    # 2. Load data
+    customers_path = project_root / "data" / "synthetic" / "customers_sample.csv"
+    tx_path = project_root / "data" / "synthetic" / "transactions_sample.csv"
+    
+    customers_df = load_customers(str(customers_path))
+    transactions = load_transactions(str(tx_path))
+
+    # 3. Run Portfolio Analysis
+    account_ids = set_config.get("accounts", [])
+    portfolio_res = run_portfolio(account_ids, transactions, customers_df, project_root)
+
+    # 4. Print Report
+    print_portfolio_report(portfolio_res["aggregate"], portfolio_res["targets"])
+
+    # 5. Export JSON (Optional)
+    if export_json_path:
+        # Ensure output directory exists
+        out_path = Path(export_json_path).resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        export_data = {
+            "meta": {
+                "account_set_id": account_set_id,
+                "generated_at": datetime.now().isoformat(),
+                "customer_count": portfolio_res["aggregate"]["customer_count"]
+            },
+            "aggregate": portfolio_res["aggregate"],
+            "targets": portfolio_res["targets"],
+            "customers": portfolio_res["customers"]
+        }
+        
+        with open(out_path, "w") as f:
+            json.dump(export_data, f, indent=2)
 
 
 if __name__ == '__main__':

@@ -193,7 +193,17 @@ python code/src/engine/account_fit.py --account basic_banking
 
 **Compare accounts for a customer:**
 ```bash
-python code/src/engine/account_fit.py --mode compare --customer CUST_015
+python modules/banks/nedbank_namibia/projects/account_fit_intelligence_engine/code/src/engine/account_fit.py --mode compare --customer CUST_015
+```
+
+**Run portfolio mode:**
+```bash
+python modules/banks/nedbank_namibia/projects/account_fit_intelligence_engine/code/src/engine/account_fit.py --mode portfolio --account-set retail_personal
+```
+
+**Export portfolio results to JSON:**
+```bash
+python modules/banks/nedbank_namibia/projects/account_fit_intelligence_engine/code/src/engine/account_fit.py --mode portfolio --account-set retail_personal --export-json outputs/portfolio.json
 ```
 
 **Run regression and smoke tests:**

@@ -6,6 +6,25 @@ This document tracks all significant changes, updates, and version history for t
 
 ## Version History
 
+### v0.5.0 — Portfolio Mode + Executive Summary (2026-02-24)
+
+**Status:** Released
+
+**Added:**
+- New CLI mode: `--mode portfolio` for batch customer analysis across product sets.
+- New account set configuration (`configs/account_sets/retail_personal.yaml`).
+- New portfolio engine logic (`code/src/engine/portfolio_engine.py`) for aggregation and ranking.
+- Bank-grade portfolio executive summary with recommendation distributions and ATM pressure stats.
+- Top-target lists for PAYU Upgrades, CashOut Shifting, and Digital Shifting.
+- Optional JSON export (`--export-json`) for portfolio results.
+
+**Verification:**
+- Frozen single-account outputs (v0.2.1, v0.3.1) remain 100% identical to golden snapshots.
+- Compare mode (v0.4.1) remains stable.
+- Portfolio output respects ≤59 character terminal width rule.
+
+---
+
 ### v0.4.1 — Hardening (2026-02-24)
 
 **Status:** Released

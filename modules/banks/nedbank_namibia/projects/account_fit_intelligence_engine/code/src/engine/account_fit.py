@@ -272,6 +272,17 @@ def analyze_customer_for_account(
         signals = kpi_out.get("migration_signals", [])
         insights = kpi_out.get("insights", [])
 
+    # Cost Semantics (v0.4.1)
+    # Basic Banking (KPI-based) might not "compute" fees in this sense
+    if kpi_engine:
+        cost_available = False
+        total_cost_val = None
+        cost_note = "fees n/a"
+    else:
+        cost_available = True
+        total_cost_val = float(total_fee)
+        cost_note = None
+
     return {
         "account_type_id": account_config.get("account_type_id", "unknown"),
         "account_class": account_class,
@@ -281,14 +292,15 @@ def analyze_customer_for_account(
             "fixed": float(fixed_fee),
             "variable": float(variable_fee),
             "total": float(total_fee)
-        } if not kpi_engine else None,  # Basic Banking (KPI-based) might not "compute" fees in this sense
-        # Wait, the rule says: "If fees not computed for that account: cost must be 0.00 but must be labelled as 'fees n/a'"
-        # I'll return the fees regardless, and let the formatter decide.
+        } if not kpi_engine else None,
         "fees_dict": {
             "fixed": float(fixed_fee),
             "variable": float(variable_fee),
             "total": float(total_fee)
         },
+        "cost_available": cost_available,
+        "total_cost": total_cost_val,
+        "cost_note": cost_note,
         "kpis": kpi_results,
         "account_fit_score": fit_score,
         "migration_signals": signals,
@@ -399,20 +411,31 @@ def generate_recommendation(basic_result: dict, payu_result: dict) -> dict:
             "alternative": "stay Basic + use CashOut"
         }
 
-    # Rule 2: Cost Comparison
-    # For thisv0.4.0, we consider Basic Banking fees as "n/a" if they are purely KPI-based
-    # However, we can compare total costs if available.
-    basic_cost = basic_result["fees_dict"]["total"]
-    payu_cost = payu_result["fees_dict"]["total"]
-    
+    # Rule 2: Cost Comparison (v0.4.1)
+    # Only run if both accounts have reliable cost computations
+    if basic_result["cost_available"] and payu_result["cost_available"]:
+        basic_cost = basic_result["total_cost"]
+        payu_cost = payu_result["total_cost"]
+        
+        if basic_cost is not None and payu_cost is not None and payu_cost < basic_cost:
+             return {
+                "recommended_account": "Silver PAYU",
+                "reasons": ["lower total monthly cost"],
+                "alternative": "Basic Banking (higher fit score)"
+            }
+
+    # Rule 3: High Fit (FALLBACK)
     basic_fit = basic_result.get("account_fit_score", 0) or 0
-    payu_fit = payu_result.get("account_fit_score", 0) or 0 # usually None for PAYU
-    
-    # If Basic Banking has a high fit and lower cost (or fees n/a), recommend it
     if basic_fit >= 80:
+        reasons = [f"high fit score {int(basic_fit)}"]
+        if not (basic_result["cost_available"] and payu_result["cost_available"]):
+            reasons.append("cost comparison unavailable")
+        else:
+            reasons.append("conservative cost profile")
+
         return {
             "recommended_account": "Basic Banking",
-            "reasons": [f"high fit score {int(basic_fit)}", "lower cost profile"],
+            "reasons": reasons,
             "alternative": None
         }
 
@@ -760,8 +783,13 @@ def run_compare_mode(customer_id: str, project_root: Path):
     
     # Basic Banking section
     fit_b = f"{int(round(basic_res['account_fit_score']))}" if basic_res['account_fit_score'] is not None else "n/a"
-    # Basic Banking cost is shown as 0.00 (fees n/a) per spec
-    cost_b = "N$0.00 (fees n/a)"
+    
+    # Cost semantics (v0.4.1)
+    if basic_res["cost_available"]:
+        cost_b = fmt_money(basic_res["total_cost"])
+    else:
+        cost_b = basic_res["cost_note"] or "fees n/a"
+
     print(clamp59(f"Basic Banking: Fit {fit_b} Cost {cost_b}"))
     
     # Surface ATM excess for Basic Banking
@@ -776,11 +804,15 @@ def run_compare_mode(customer_id: str, project_root: Path):
     
     sigs = ", ".join(basic_res.get("migration_signals", [])) or "none"
     print(clamp59(f"  Signals: {sigs}"))
-    print("")
+    print(clamp59(""))
 
     # Silver PAYU section
     fit_p = "n/a"
-    cost_p = fmt_money(payu_res['fees_dict']['total'])
+    if payu_res["cost_available"]:
+        cost_p = fmt_money(payu_res["total_cost"])
+    else:
+        cost_p = payu_res["cost_note"] or "fees n/a"
+
     print(clamp59(f"Silver PAYU: Fit {fit_p} Cost {cost_p}"))
     
     fixed_p = payu_res['fees_dict']['fixed']
@@ -789,7 +821,7 @@ def run_compare_mode(customer_id: str, project_root: Path):
     
     top_p = ", ".join([d[0] for d in payu_res.get("top_fee_drivers", [])[:2]])
     print(clamp59(f"  Top {top_p}"))
-    print("")
+    print(clamp59(""))
 
     # Recommendation section
     print(clamp59("RECOMMENDATION:"))

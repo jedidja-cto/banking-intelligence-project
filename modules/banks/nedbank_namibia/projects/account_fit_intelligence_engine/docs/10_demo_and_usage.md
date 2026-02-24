@@ -174,6 +174,36 @@ print(f"\nEligibility: {result['eligibility_status']}")
 - Sensitivity analysis (how fees change with behaviour)
 - Edge case testing (zero transactions, extreme values)
 
+# Commands
+
+**Generate synthetic data:**
+```bash
+python code/src/ingest/generate_synthetic.py
+```
+
+**Run Silver PAYU report:**
+```bash
+python code/src/engine/account_fit.py --account silver_payu
+```
+
+**Run Basic Banking report:**
+```bash
+python code/src/engine/account_fit.py --account basic_banking
+```
+
+**Compare accounts for a customer:**
+```bash
+python code/src/engine/account_fit.py --mode compare --customer CUST_015
+```
+
+**Run regression and smoke tests:**
+```bash
+python -m pytest -q
+```
+
+> [!NOTE]
+> Single-account outputs for Silver PAYU (v0.2.1) and Basic Banking (v0.3.1) are snapshot-frozen and protected by line-for-line golden regression tests.
+
 ## Command-Line Usage (Future)
 
 ```bash

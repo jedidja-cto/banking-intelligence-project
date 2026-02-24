@@ -6,6 +6,46 @@ This document tracks all significant changes, updates, and version history for t
 
 ## Version History
 
+### v0.4.1 — Hardening (2026-02-24)
+
+**Status:** Released
+
+**Added:**
+- Golden regression tests for PAYU and Basic Banking frozen outputs (`tests/test_golden_outputs.py`).
+- Exact line-match snapshot protection in `tests/golden/`.
+
+**Fixed:**
+- Compare-mode cost semantics for Basic Banking (“Cost fees n/a” instead of misleading N$0.00).
+- Guarded recommendation rules to handle accounts with missing cost data.
+- Enforced ≤59 character terminal width in compare mode via `clamp59()`.
+
+**Verification:**
+- Full regression suite passing.
+- Deterministic synthetic data generation verified.
+
+---
+
+### v0.4.0 — Compare Mode + Recommendation Engine (2026-02-23)
+
+**Status:** Released
+
+**Added:**
+- `--mode compare` for side-by-side account analysis.
+- Deterministic recommendation engine logic.
+- Pure analysis function `analyze_customer_for_account`.
+
+---
+
+### v0.3.1 — Executive Summary + Footer Rollups (2026-02-22)
+
+**Status:** Released
+
+**Added:**
+- Basic Banking: per-customer EXEC SUMMARY block (max 59-char lines).
+- Footer rollups for ATM excess and migration candidates.
+
+---
+
 ### v0.3.0 — Generic KPI Engine + Basic Banking (2026-02-21)
 
 **Status:** Released
@@ -372,3 +412,13 @@ Changes are categorized as:
 - See `11_assumptions_and_limits.md` for current limitations
 - See `03_proposed_solution.md` for version roadmap
 - See `README.md` for project overview
+- See `project_state.md` for current lifecycle status
+
+---
+
+## Version Map
+
+- **v0.2.1** — PAYU fee engine (Turnover-aware)
+- **v0.3.1** — Basic Banking KPI + exec summary
+- **v0.4.0** — Compare mode + recommendation engine
+- **v0.4.1** — Hardening + golden tests

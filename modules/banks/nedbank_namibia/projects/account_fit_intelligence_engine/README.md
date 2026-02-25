@@ -4,6 +4,13 @@
 **Bank:** Nedbank Namibia  
 **Focus:** Silver Pay-as-you-use (PAYU) account simulator
 
+![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=flat&logo=pandas&logoColor=white)
+![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=flat&logo=yaml&logoColor=151515)
+![Pytest](https://img.shields.io/badge/pytest-%23C1E814.svg?style=flat&logo=pytest&logoColor=black)
+![Git](https://img.shields.io/badge/git-%23F05033.svg?style=flat&logo=git&logoColor=white)
+
+
 ## Purpose
 
 This project simulates customer behaviour and fee calculations for Nedbank Namibia's Silver PAYU account. It is intentionally scoped to a single account type in v0.1 to:
@@ -45,7 +52,17 @@ account_fit_intelligence_engine/
 4. Run smoke tests: `pytest tests/test_smoke.py`
 5. Explore notebooks for fee model validation
 
+## Built With
+
+- **Python**: Core logic and analysis engine.
+- **Pandas**: High-performance data manipulation and analysis.
+- **PyYAML**: Configuration management for account rules and fee schedules.
+- **AST (Abstract Syntax Tree)**: Safe formula evaluation in the KPI engine.
+- **Pytest**: Industry-standard testing framework for unit and regression tests.
+- **Jupyter**: Interactive data exploration and model validation.
+
 ## Taxonomy
+
 
 All references use consistent naming:
 - `customer_segment`: personal

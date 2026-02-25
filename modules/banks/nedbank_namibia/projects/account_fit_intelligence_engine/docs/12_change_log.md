@@ -128,45 +128,41 @@ This document tracks all significant changes, updates, and version history for t
 
 ---
 
-### v0.1.0 - Initial Scaffold (2024-01-20)
+### v0.1.3 — Behaviour Archetypes (2026-02-21)
+
+**Added:**
+- Enhanced synthetic data generator with behavioral archetype injection (e.g., "Cash-Heavy", "Digital-Savvy").
+- Precise transaction distribution logic.
+
+---
+
+### v0.1.2 — Multi-Customer Reporting (2026-02-21)
+
+**Added:**
+- Batch reporting capabilities to the core engine.
+- Demo usage documentation and onboarding guides.
+
+---
+
+### v0.1.1 — Behavioural Features (2026-02-21)
+
+**Added:**
+- Initial implementation of the feature engineering pipeline.
+- Simple behavioral tagging system (e.g., `high_digital`, `frequent_atm`).
+
+---
+
+### v0.1.0 — Initial Scaffold (2026-02-20)
 
 **Status:** Initial development
 
 **Added:**
-- Project structure and documentation
-- Silver PAYU account configuration
-- Synthetic data schemas (customers, transactions)
-- Code stubs for core modules:
-  - `schema.py` - Data schemas
-  - `generate_synthetic.py` - Data generation
-  - `load_data.py` - Data loading
-  - `payu_fee_model.py` - Fee calculation
-  - `build_features.py` - Feature engineering
-  - `account_fit.py` - Account fit analysis
-- Test framework (`test_smoke.py`)
-- Jupyter notebooks for exploration and validation
-- Comprehensive documentation (12 docs)
+- Project structure and core methodology.
+- Silver PAYU account configuration stubs.
+- Initial synthetic data schemas.
+- Code stubs for `schema.py`, `generate_synthetic.py`, and `account_fit.py`.
+- Initial library of 12 internal documentation files.
 
-**Scope:**
-- Single account type: Silver PAYU
-- Synthetic data only
-- Basic fee calculation (monthly fee + placeholder transaction fees)
-- Behaviour feature extraction
-- No multi-account comparison
-- No recommendation engine
-
-**Known Limitations:**
-- Transaction fees unknown (using placeholder 0 NAD)
-- Synthetic data not validated against real patterns
-- No production deployment
-- No API layer
-- No user interface
-
-**Next Steps:**
-- Implement code stubs
-- Generate initial synthetic data
-- Validate fee calculation logic
-- Test feature engineering pipeline
 
 ---
 

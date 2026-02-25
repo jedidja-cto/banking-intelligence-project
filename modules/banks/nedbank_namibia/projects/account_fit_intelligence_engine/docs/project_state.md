@@ -24,9 +24,11 @@ Golden tests exist in `tests/test_golden_outputs.py` and must remain green for a
 - **Terminal Width**: ≤59 char terminal clamp enforced via `clamp59()`.
 
 ## Quality Gates
+- **History Audit**: Timelines and change logs synchronized with Git history.
 - **Unit/Integration Tests**: `pytest` passing.
 - **Regression Tests**: Golden snapshots active and verified.
 - **Reproduction**: Deterministic synthetic data generation verified.
+
 
 ## Next Target
 **v0.6.0 — Dashboard Integration**
